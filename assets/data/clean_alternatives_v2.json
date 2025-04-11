@@ -1,0 +1,50 @@
+{
+  "chips": [
+    {
+      "name": "Bare Baked Veggie Chips",
+      "description": "Simple baked veggie chips without additives.",
+      "image": "https://images.openfoodfacts.org/images/products/088/884/069/3025/front_en.4.full.jpg"
+    },
+    {
+      "name": "Boulder Canyon Avocado Oil Chips",
+      "description": "Kettle-cooked chips with avocado oil, gluten-free.",
+      "image": "https://images.openfoodfacts.org/images/products/070/200/535/0788/front_en.3.full.jpg"
+    }
+  ],
+  "yogurt": [
+    {
+      "name": "Skyr Natural Yogurt",
+      "description": "High-protein, fat-free Icelandic yogurt.",
+      "image": "https://images.openfoodfacts.org/images/products/569/066/800/2364/front_en.4.full.jpg"
+    },
+    {
+      "name": "Yeo Valley Organic Kefir",
+      "description": "Fermented organic kefir with probiotics.",
+      "image": "https://images.openfoodfacts.org/images/products/501/366/53/0586/front_en.4.full.jpg"
+    }
+  ],
+  "bread": [
+    {
+      "name": "Wholegrain Rye Bread",
+      "description": "Dense, fiber-rich rye bread with no sugar.",
+      "image": "https://images.openfoodfacts.org/images/products/400/847/42/2293/front_en.4.full.jpg"
+    },
+    {
+      "name": "Sprouted Grain Bread",
+      "description": "Minimally processed, nutrient-rich bread.",
+      "image": "https://images.openfoodfacts.org/images/products/003/666/041/9223/front_en.4.full.jpg"
+    }
+  ],
+  "snacks": [
+    {
+      "name": "Alesto Cashew Nuts",
+      "description": "Raw, unsalted cashews, no additives.",
+      "image": "https://images.openfoodfacts.org/images/products/200/148/100/0017/front_en.4.full.jpg"
+    },
+    {
+      "name": "Almonds",
+      "description": "Simple roasted almonds, high in protein.",
+      "image": "https://images.openfoodfacts.org/images/products/003/640/800/3944/front_en.4.full.jpg"
+    }
+  ]
+}

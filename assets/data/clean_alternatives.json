@@ -1,0 +1,86 @@
+{
+  "chips": [
+    {
+      "name": "Jackson\u2019s Honest Sweet Potato Chips",
+      "score": 90,
+      "keywords": [
+        "sweet potato",
+        "coconut oil",
+        "low sodium",
+        "paleo"
+      ],
+      "image": "https://static.openfoodfacts.org/images/products/085/696/600/0110/front_en.3.400.jpg",
+      "description": "Cooked in coconut oil, no artificial ingredients."
+    },
+    {
+      "name": "Siete Grain-Free Tortilla Chips",
+      "score": 88,
+      "keywords": [
+        "avocado oil",
+        "grain-free",
+        "gluten-free"
+      ],
+      "image": "https://static.openfoodfacts.org/images/products/860/001/313/23/front_en.6.400.jpg",
+      "description": "Made with clean avocado oil and cassava flour."
+    },
+    {
+      "name": "Terra Original Vegetable Chips",
+      "score": 85,
+      "keywords": [
+        "vegetable chips",
+        "no additives",
+        "colorful root vegetables"
+      ],
+      "image": "https://static.openfoodfacts.org/images/products/728/229/015/506/front_en.4.400.jpg",
+      "description": "Non-GMO, made from real root vegetables."
+    }
+  ],
+  "bread": [
+    {
+      "name": "Dave's Killer Bread Organic Powerseed",
+      "score": 91,
+      "keywords": [
+        "organic",
+        "whole grain",
+        "no corn syrup"
+      ],
+      "image": "https://static.openfoodfacts.org/images/products/013/764/025/548/front_en.3.400.jpg",
+      "description": "21 whole grains and seeds, no artificial ingredients."
+    },
+    {
+      "name": "Ezekiel 4:9 Sprouted Grain Bread",
+      "score": 93,
+      "keywords": [
+        "sprouted",
+        "flourless",
+        "complete protein"
+      ],
+      "image": "https://static.openfoodfacts.org/images/products/073/472/001/314/front_en.4.400.jpg",
+      "description": "Flourless bread made from sprouted whole grains."
+    }
+  ],
+  "soda": [
+    {
+      "name": "Spindrift Sparkling Water \u2013 Lemon",
+      "score": 95,
+      "keywords": [
+        "real fruit",
+        "no sugar",
+        "sparkling water"
+      ],
+      "image": "https://static.openfoodfacts.org/images/products/857/635/002/124/front_en.4.400.jpg",
+      "description": "Carbonated water + lemon juice. No sugar or sweeteners."
+    },
+    {
+      "name": "OLIPOP Classic Root Beer",
+      "score": 89,
+      "keywords": [
+        "prebiotic",
+        "low sugar",
+        "fiber"
+      ],
+      "image": "https://static.openfoodfacts.org/images/products/850/055/007/057/front_en.5.400.jpg",
+      "description": "Gut-friendly soda alternative with plant fiber."
+    }
+  ]
+}
