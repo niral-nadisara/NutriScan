@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import alternativesData from '../assets/data/clean_alternatives.json';
+import { getUserData } from '../firebase/firestoreHelpers';
 
 export default function ResultScreen({ route }) {
   const { barcode } = route.params;
@@ -19,34 +20,41 @@ export default function ResultScreen({ route }) {
 
   const fetchAlternatives = async (categories_tags = []) => {
     try {
+      const userData = await getUserData();
+      const prefs = userData?.preferences || {};
+
       const keyword = [...categories_tags].reverse().find(tag =>
         !tag.includes('plant') && !tag.includes('foods') && !tag.includes('beverages')
       )?.split(':')[1] || 'chips';
-  
+
       const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${keyword}&search_simple=1&action=process&json=1`;
-  
-      console.log('🔍 Smart alternative lookup for:', keyword);
-      console.log('🌐 URL:', url);
-  
+
       const res = await fetch(url);
       const data = await res.json();
-  
-      const cleanAlts = data.products.filter(p =>
-        p.nova_group <= 2 &&
-        p.product_name &&
-        p.image_front_url &&
-        p.categories_tags?.some(tag => tag.includes(keyword))
-      ).slice(0, 5);
-  
+
+      const cleanAlts = data.products.filter(p => {
+        const meetsOrganic = prefs.preferOrganic ? p.labels_tags?.includes('organic') : true;
+        const meetsVegan = prefs.preferVegan ? p.labels_tags?.includes('vegan') : true;
+        const meetsSodium = prefs.avoidSodium ? (p.nutriments?.salt || 0) <= 1.2 : true;
+        const noAdditives = prefs.hideAdditives ? !(p.ingredients_text || '').match(/e\d{3}/i) : true;
+
+        return (
+          p.nova_group <= 2 &&
+          p.product_name &&
+          p.image_front_url &&
+          p.categories_tags?.some(tag => tag.includes(keyword)) &&
+          meetsOrganic && meetsVegan && meetsSodium && noAdditives
+        );
+      }).slice(0, 5);
+
       if (cleanAlts.length === 0) {
-        console.log('⚠️ No clean alts online, falling back to local.');
         const fallbackAlts = getCleanAlternatives(keyword);
         setAlternatives(fallbackAlts);
       } else {
         setAlternatives(cleanAlts);
       }
     } catch (err) {
-      console.error('❌ Failed fetching online alternatives. Using local.');
+      console.error('❌ Fetch error for alternatives:', err);
       const fallbackAlts = getCleanAlternatives('chips');
       setAlternatives(fallbackAlts);
     }
@@ -71,10 +79,8 @@ export default function ResultScreen({ route }) {
       }
 
       if (productData.categories_tags?.length) {
-        const altCategory = productData.categories_tags[0];
-        fetchAlternatives(altCategory);
+        fetchAlternatives(productData.categories_tags);
       }
-      
 
     } catch (err) {
       console.error('❌ Fetch error:', err);
@@ -171,7 +177,6 @@ export default function ResultScreen({ route }) {
       <Text style={styles.name}>{product.product_name}</Text>
       <Text style={styles.brand}>{product.brands}</Text>
 
-      {/* Ingredient Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Ingredients:</Text>
         <Text style={styles.legend}>🟢 Clean   🟠 Suspicious   🔴 Harmful</Text>
@@ -191,7 +196,6 @@ export default function ResultScreen({ route }) {
         ))}
       </View>
 
-      {/* Nutritional Breakdown */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Nutritional Breakdown:</Text>
         <Text style={styles.nutrientLine}>
@@ -208,7 +212,6 @@ export default function ResultScreen({ route }) {
         </Text>
       </View>
 
-      {/* Health Score */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Health Score:</Text>
         <Text style={[styles.score, { color: score >= 70 ? 'green' : score >= 50 ? 'orange' : 'red' }]}>
@@ -218,17 +221,17 @@ export default function ResultScreen({ route }) {
 
       {alternatives.length > 0 && (
         <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Clean Alternatives:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <Text style={styles.sectionTitle}>Clean Alternatives:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {alternatives.map((alt, idx) => (
-                <View key={idx} style={styles.altCard}>
+              <View key={idx} style={styles.altCard}>
                 <Image source={{ uri: alt.image_front_url || alt.image }} style={styles.altImage} />
                 <Text style={styles.altName} numberOfLines={2}>{alt.product_name || alt.name}</Text>
-                </View>
+              </View>
             ))}
-            </ScrollView>
+          </ScrollView>
         </View>
-        )}
+      )}
     </ScrollView>
   );
 }
