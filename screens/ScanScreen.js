@@ -6,8 +6,10 @@ import {
   Alert,
   TextInput,
   Button,
+  TouchableOpacity,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/config';
 import { getUserData, saveUserData } from '../firebase/firestoreHelpers';
 
@@ -66,6 +68,23 @@ export default function ScanScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Back Button with Confirmation */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => {
+          Alert.alert(
+            'Go to Home',
+            'Are you sure you want to go back to the Home screen?',
+            [
+              { text: 'No', style: 'cancel' },
+              { text: 'Yes', onPress: () => navigation.navigate('Home') },
+            ]
+          );
+        }}
+      >
+        <Ionicons name="arrow-back" size={26} color="#333" />
+      </TouchableOpacity>
+
       <View style={styles.cameraContainer}>
         <CameraView
           ref={cameraRef}
@@ -115,5 +134,15 @@ const styles = StyleSheet.create({
     padding: 10,
     width: '80%',
     marginBottom: 12,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 10,
+    backgroundColor: '#fff',
+    padding: 6,
+    borderRadius: 20,
+    elevation: 5,
   },
 });
