@@ -106,24 +106,33 @@ export default function ScanScreen({ navigation }) {
           onChangeText={setManualCode}
           keyboardType="numeric"
         />
-        <Button title="Submit" onPress={handleManualSubmit} />
+        <TouchableOpacity style={styles.submitButton} onPress={handleManualSubmit}>
+        <Text style={styles.submitButtonText}>Submit</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   cameraContainer: {
-    height: '60%',
+    height: 300,
+    width: '90%',
+    alignSelf: 'center',
     overflow: 'hidden',
     borderRadius: 12,
-    margin: 12,
+    marginBottom: 20,
   },
   camera: {
     flex: 1,
   },
   manualEntry: {
+    width: '100%',
     padding: 16,
     alignItems: 'center',
   },
@@ -144,5 +153,19 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 20,
     elevation: 5,
+  },
+  submitButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    elevation: 3,
+    marginTop: 10,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
