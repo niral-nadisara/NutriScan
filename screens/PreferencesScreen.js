@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Switch,
-  ScrollView,
-  Alert,
-  Button,
-} from 'react-native';
+import { View, Text, StyleSheet, Switch, ScrollView, Alert, Button } from 'react-native';
 import { auth } from '../firebase/config';
 import { saveUserData, getUserData } from '../firebase/firestoreHelpers';
 
@@ -17,15 +9,15 @@ export default function PreferencesScreen({ navigation }) {
     preferOrganic: false,
     preferVegan: false,
     avoidSodium: false,
-    avoidAllergens: false,
-    ecoPackaging: false,
     noGmos: false,
     noAddedSugar: false,
     noPreservatives: false,
+    ecoPackaging: false,
+    avoidAllergens: false,
   });
 
-  const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!auth.currentUser) {
@@ -37,14 +29,9 @@ export default function PreferencesScreen({ navigation }) {
   }, []);
 
   const loadPrefs = async () => {
-    try {
-      const data = await getUserData();
-      if (data?.preferences) setPrefs(data.preferences);
-    } catch (err) {
-      console.error('Failed to load preferences:', err);
-    } finally {
-      setLoading(false);
-    }
+    const data = await getUserData();
+    if (data?.preferences) setPrefs(data.preferences);
+    setLoading(false);
   };
 
   const handleToggle = (key, value) => {
@@ -59,6 +46,7 @@ export default function PreferencesScreen({ navigation }) {
       setHasChanges(false);
     } catch (err) {
       Alert.alert('❌ Failed to save preferences.');
+      console.error('Save error:', err);
     }
   };
 
@@ -68,50 +56,12 @@ export default function PreferencesScreen({ navigation }) {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Your Preferences</Text>
 
-      <View style={styles.option}>
-        <Text style={styles.label}>Hide Additives</Text>
-        <Switch value={prefs.hideAdditives} onValueChange={(val) => handleToggle("hideAdditives", val)} />
-      </View>
-
-      <View style={styles.option}>
-        <Text style={styles.label}>Prefer Organic</Text>
-        <Switch value={prefs.preferOrganic} onValueChange={(val) => handleToggle("preferOrganic", val)} />
-      </View>
-
-      <View style={styles.option}>
-        <Text style={styles.label}>Prefer Vegan</Text>
-        <Switch value={prefs.preferVegan} onValueChange={(val) => handleToggle("preferVegan", val)} />
-      </View>
-
-      <View style={styles.option}>
-        <Text style={styles.label}>Avoid Sodium</Text>
-        <Switch value={prefs.avoidSodium} onValueChange={(val) => handleToggle("avoidSodium", val)} />
-      </View>
-
-      <View style={styles.option}>
-        <Text style={styles.label}>Avoid Allergens</Text>
-        <Switch value={prefs.avoidAllergens} onValueChange={(val) => handleToggle("avoidAllergens", val)} />
-      </View>
-
-      <View style={styles.option}>
-        <Text style={styles.label}>Eco-Friendly Packaging</Text>
-        <Switch value={prefs.ecoPackaging} onValueChange={(val) => handleToggle("ecoPackaging", val)} />
-      </View>
-
-      <View style={styles.option}>
-        <Text style={styles.label}>No GMOs</Text>
-        <Switch value={prefs.noGmos} onValueChange={(val) => handleToggle("noGmos", val)} />
-      </View>
-
-      <View style={styles.option}>
-        <Text style={styles.label}>No Added Sugar</Text>
-        <Switch value={prefs.noAddedSugar} onValueChange={(val) => handleToggle("noAddedSugar", val)} />
-      </View>
-
-      <View style={styles.option}>
-        <Text style={styles.label}>No Preservatives</Text>
-        <Switch value={prefs.noPreservatives} onValueChange={(val) => handleToggle("noPreservatives", val)} />
-      </View>
+      {Object.keys(prefs).map((key) => (
+        <View style={styles.option} key={key}>
+          <Text style={styles.label}>{formatLabel(key)}</Text>
+          <Switch value={prefs[key]} onValueChange={(val) => handleToggle(key, val)} />
+        </View>
+      ))}
 
       {hasChanges && (
         <View style={styles.saveButtonWrapper}>
@@ -121,6 +71,12 @@ export default function PreferencesScreen({ navigation }) {
     </ScrollView>
   );
 }
+
+const formatLabel = (key) =>
+  key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (str) => str.toUpperCase())
+    .replace('Gmos', 'GMOs');
 
 const styles = StyleSheet.create({
   container: {
