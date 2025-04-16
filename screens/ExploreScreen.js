@@ -27,9 +27,11 @@ export default function ExploreScreen() {
     try {
       if (auth.currentUser) {
         const data = await getUserData();
-        setPreferences(data?.preferences || {});
+        const userPrefs = data?.preferences || {};
+        console.log("🎯 Loaded user preferences:", userPrefs);
+        setPreferences(userPrefs);
+        await fetchProducts(userPrefs);
       }
-      await fetchProducts();
     } catch (err) {
       console.error('❌ Error loading preferences/products:', err);
     } finally {
@@ -37,66 +39,68 @@ export default function ExploreScreen() {
     }
   };
 
-  const fetchProducts = async () => {
-    const urls = [
-      'https://world.openfoodfacts.org/cgi/search.pl?search_terms=vegan&search_simple=1&json=1&page_size=50',
-      'https://world.openfoodfacts.org/cgi/search.pl?search_terms=organic&search_simple=1&json=1&page_size=50',
-      'https://world.openfoodfacts.org/cgi/search.pl?search_terms=no-gmos&search_simple=1&json=1&page_size=50',
-      'https://world.openfoodfacts.org/cgi/search.pl?search_terms=no-added-sugar&search_simple=1&json=1&page_size=50',
-      'https://world.openfoodfacts.org/cgi/search.pl?search_terms=no-preservatives&search_simple=1&json=1&page_size=50',
-    ];
-
+  const fetchProducts = async (prefs = {}) => {
     try {
-      let allProducts = [];
+      const res = await fetch(
+        'https://world.openfoodfacts.org/cgi/search.pl?search_terms=healthy&search_simple=1&json=1&page_size=100',
+        {
+          headers: {
+            Accept: 'application/json',
+          },
+        }
+      );
 
-      for (const url of urls) {
-        const res = await fetch(url);
-        const data = await res.json();
-        const filtered = data.products.filter(
-          (p) => p.product_name && p.lang === 'en'
-        );
-        allProducts = [...allProducts, ...filtered];
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status} ${res.statusText}`);
       }
 
-      // Deduplicate by product code
-      const uniqueMap = new Map();
-      allProducts.forEach((p) => uniqueMap.set(p.code, p));
-      const mergedProducts = Array.from(uniqueMap.values());
+      const data = await res.json();
+      const englishProducts = data.products.filter(
+        (p) => p.product_name && p.lang === 'en'
+      );
 
-      // Filter based on active preferences
-      const finalFiltered = mergedProducts.filter((p) => {
+      const filtered = englishProducts.filter((p) => {
         const tags = (p.labels_tags || [])
           .map((t) => t.toLowerCase())
           .map((t) => t.replace(/^en:/, ''));
 
         const ingredientsText = (p.ingredients_text || '').toLowerCase();
         const salt = p.nutriments?.salt || 0;
+        const allergens = p.allergens_tags || [];
 
-        if (preferences.preferOrganic && !tags.includes('organic')) return false;
-        if (preferences.preferVegan && !tags.includes('vegan')) return false;
-        if (preferences.avoidSodium && salt > 1.2) return false;
-        if (
-          preferences.hideAdditives &&
-          !tags.includes('no-additives') &&
-          /e\d{3}/i.test(ingredientsText)
-        )
-          return false;
-        if (
-          preferences.noGmos &&
-          !tags.includes('no-gmos') &&
-          !tags.includes('non-gmo-project')
-        )
-          return false;
-        if (preferences.noAddedSugar && !tags.includes('no-added-sugar'))
-          return false;
-        if (preferences.noPreservatives && !tags.includes('no-preservatives'))
-          return false;
+        let matchCount = 0;
 
-        return true;
+        if (prefs.preferOrganic && tags.includes('organic')) matchCount++;
+        if (prefs.preferVegan && tags.includes('vegan')) matchCount++;
+        if (
+          prefs.hideAdditives &&
+          (tags.includes('no-additives') || /e\d{3}/i.test(ingredientsText))
+        )
+          matchCount++;
+        if (
+          prefs.noGmos &&
+          (tags.includes('no-gmos') || tags.includes('non-gmo-project'))
+        )
+          matchCount++;
+        if (prefs.noAddedSugar && tags.includes('no-added-sugar')) matchCount++;
+        if (prefs.noPreservatives && tags.includes('no-preservatives'))
+          matchCount++;
+        if (prefs.avoidSodium && salt <= 1.2) matchCount++;
+        if (
+          prefs.ecoPackaging &&
+          tags.some((t) =>
+            ['fsc', 'fsc-recycling', 'eco-emballage', 'green-dot'].includes(t)
+          )
+        )
+          matchCount++;
+        if (prefs.avoidAllergens && allergens.length === 0) matchCount++;
+
+        const activePrefsCount = Object.values(prefs).filter(Boolean).length;
+        return activePrefsCount === 0 || matchCount > 0;
       });
 
-      console.log(`✅ Showing ${finalFiltered.length} products after filtering`);
-      setProducts(finalFiltered);
+      console.log(`✅ Showing ${filtered.length} filtered products`);
+      setProducts(filtered);
     } catch (err) {
       console.error('❌ Failed to fetch or filter products:', err);
     }
@@ -111,6 +115,8 @@ export default function ExploreScreen() {
     if (preferences.noGmos) filters.push('No GMOs');
     if (preferences.noAddedSugar) filters.push('No Added Sugar');
     if (preferences.noPreservatives) filters.push('No Preservatives');
+    if (preferences.ecoPackaging) filters.push('Eco-Friendly');
+    if (preferences.avoidAllergens) filters.push('Allergen-Free');
 
     if (filters.length === 0) return null;
 
@@ -133,27 +139,29 @@ export default function ExploreScreen() {
 
     const visibleTags = [];
 
-    if (preferences.preferVegan && tags.includes('vegan')) {
-      visibleTags.push('Vegan');
-    }
-    if (preferences.preferOrganic && tags.includes('organic')) {
+    if (preferences.preferVegan && tags.includes('vegan')) visibleTags.push('Vegan');
+    if (preferences.preferOrganic && tags.includes('organic'))
       visibleTags.push('Organic');
-    }
-    if (preferences.hideAdditives && tags.includes('no-additives')) {
+    if (preferences.hideAdditives && tags.includes('no-additives'))
       visibleTags.push('No Additives');
-    }
     if (
       preferences.noGmos &&
       (tags.includes('no-gmos') || tags.includes('non-gmo-project'))
-    ) {
+    )
       visibleTags.push('Non-GMO');
-    }
-    if (preferences.noAddedSugar && tags.includes('no-added-sugar')) {
+    if (preferences.noAddedSugar && tags.includes('no-added-sugar'))
       visibleTags.push('No Added Sugar');
-    }
-    if (preferences.noPreservatives && tags.includes('no-preservatives')) {
+    if (preferences.noPreservatives && tags.includes('no-preservatives'))
       visibleTags.push('No Preservatives');
-    }
+    if (
+      preferences.ecoPackaging &&
+      tags.some((t) =>
+        ['fsc', 'fsc-recycling', 'eco-emballage', 'green-dot'].includes(t)
+      )
+    )
+      visibleTags.push('Eco-Friendly');
+    if (preferences.avoidAllergens && (item.allergens_tags || []).length === 0)
+      visibleTags.push('Allergen-Free');
 
     return (
       <View style={styles.card}>
