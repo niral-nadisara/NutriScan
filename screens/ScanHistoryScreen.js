@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import { auth } from '../firebase/config';
 import { getUserData } from '../firebase/firestoreHelpers';
 
@@ -23,13 +30,15 @@ export default function ScanHistoryScreen({ navigation }) {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.meta}>Score: {item.score ?? 'N/A'}</Text>
-      <Text style={styles.meta}>
-        Scanned on: {new Date(item.timestamp).toLocaleString()}
-      </Text>
-    </View>
+    <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { item })}>
+      <View style={styles.card}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.meta}>Score: {item.score ?? 'N/A'}</Text>
+        <Text style={styles.meta}>
+          Scanned on: {new Date(item.timestamp).toLocaleString()}
+        </Text>
+      </View>
+    </TouchableOpacity>
   );
 
   return (

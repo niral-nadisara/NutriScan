@@ -30,14 +30,26 @@ export default function ScanScreen({ navigation }) {
       const existing = await getUserData();
       const currentHistory = existing?.scanHistory || [];
 
-      const updatedHistory = [
-        {
-          barcode,
-          timestamp: Date.now(),
-        },
-        ...currentHistory.slice(0, 49), // Keep last 50
-      ];
+      // Call OpenFoodFacts API
+      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+      const result = await response.json();
 
+      let name = "Unknown Product";
+      let nutrition = {};
+      if (result.status === 1) {
+        name = result.product.product_name || "Unnamed";
+        nutrition = result.product.nutriments || {};
+      }
+
+      const productDetails = {
+        name,
+        barcode,
+        score: Math.floor(Math.random() * 100),
+        timestamp: Date.now(),
+        nutrition,
+      };
+
+      const updatedHistory = [productDetails, ...currentHistory.slice(0, 49)];
       await saveUserData({ scanHistory: updatedHistory });
     } catch (err) {
       console.error('Failed to save scan history:', err);
