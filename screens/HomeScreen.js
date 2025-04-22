@@ -78,7 +78,7 @@ export default function HomeScreen({ navigation }) {
           ]}
         />
         <Animated.Text style={[styles.tagline, { opacity: opacityAnim }]}>
-          Scan smart. Eat clean.
+        Good Choices Start with a Scan.
         </Animated.Text>
       </View>
 
@@ -167,8 +167,9 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#00796B',
+    color: '#004D40',
     marginBottom: 10,
+    fontStyle: 'italic',
   },
   modalOverlay: {
     flex: 1,

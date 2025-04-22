@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, Alert } f
 import alternativesData from '../assets/data/clean_alternatives.json';
 import { getUserData } from '../firebase/firestoreHelpers';
 
-export default function ResultScreen({ route }) {
+export default function ResultScreen({ route, navigation }) {
   const { barcode } = route.params;
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -232,6 +232,23 @@ export default function ResultScreen({ route }) {
           </ScrollView>
         </View>
       )}
+
+      <View style={{ marginTop: 30 }}>
+        <Text style={{ textAlign: 'center', marginBottom: 8 }}>Want to scan another item?</Text>
+        <Text
+          style={{
+            textAlign: 'center',
+            padding: 10,
+            backgroundColor: '#4caf50',
+            color: 'white',
+            borderRadius: 6,
+            overflow: 'hidden',
+          }}
+          onPress={() => navigation.navigate('ScanScreen')}
+        >
+          Rescan
+        </Text>
+      </View>
     </ScrollView>
   );
 }

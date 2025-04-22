@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { auth } from '../firebase/config';
 import { getUserData } from '../firebase/firestoreHelpers';
 
@@ -7,29 +7,30 @@ export default function ScanHistoryScreen({ navigation }) {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      Alert.alert('Login required', 'Please login to view scan history.');
-      navigation.navigate('Auth');
-      return;
-    }
-    loadHistory();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (auth.currentUser) loadHistory();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const loadHistory = async () => {
     const data = await getUserData();
     if (data?.scanHistory) {
-      setHistory(data.scanHistory);
+      setHistory(data.scanHistory.sort((a, b) => b.timestamp - a.timestamp));
     }
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.name}>{item.name}</Text>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate('Result', { barcode: item.barcode })}
+    >
+      <Text style={styles.name}>{item.name ? item.name : 'Unknown Product'}</Text>
       <Text style={styles.meta}>Score: {item.score ?? 'N/A'}</Text>
       <Text style={styles.meta}>
         Scanned on: {new Date(item.timestamp).toLocaleString()}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -56,6 +57,11 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   name: { fontSize: 18, fontWeight: '600' },
   meta: { color: '#666' },
