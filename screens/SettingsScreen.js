@@ -1,3 +1,9 @@
+const avatarOptions = [
+  require('../assets/avatars/avatar1.png'),
+  require('../assets/avatars/avatar2.png'),
+  require('../assets/avatars/avatar3.png'),
+  require('../assets/avatars/avatar4.png'),
+];
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -11,6 +17,17 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { auth } from '../firebase/config';
 import { saveUserData, getUserData } from '../firebase/firestoreHelpers';
+
+const getAvatarImage = (avatar) => {
+  const avatarMap = {
+    'avatar1.png': require('../assets/avatars/avatar1.png'),
+    'avatar2.png': require('../assets/avatars/avatar2.png'),
+    'avatar3.png': require('../assets/avatars/avatar3.png'),
+    'avatar4.png': require('../assets/avatars/avatar4.png'),
+  };
+
+  return avatarMap[avatar] || require('../assets/avatar_placeholder.png');
+};
 
 export default function SettingsScreen({ navigation }) {
   const user = auth.currentUser;
@@ -26,8 +43,16 @@ export default function SettingsScreen({ navigation }) {
   }, []);
 
   const loadProfile = async () => {
-    const data = await getUserData();
-    if (data?.avatar) setAvatar(data.avatar);
+    try {
+      const data = await getUserData();
+      if (data?.avatar) {
+        const avatarValue = typeof data.avatar === 'string' ? data.avatar : null;
+        setAvatar(avatarValue);
+        console.log('✅ Loaded avatar from user profile:', avatarValue);
+      }
+    } catch (err) {
+      console.error('Failed to load avatar from user profile:', err);
+    }
   };
 
   const pickImage = async () => {
@@ -35,6 +60,7 @@ export default function SettingsScreen({ navigation }) {
     if (!result.canceled) {
       const uri = result.assets[0].uri;
       setAvatar(uri);
+      console.log('📸 Selected image or photo URI:', uri);
       await saveUserData({ avatar: uri });
     }
   };
@@ -44,6 +70,7 @@ export default function SettingsScreen({ navigation }) {
     if (!result.canceled) {
       const uri = result.assets[0].uri;
       setAvatar(uri);
+      console.log('📸 Selected image or photo URI:', uri);
       await saveUserData({ avatar: uri });
     }
   };
@@ -54,10 +81,56 @@ export default function SettingsScreen({ navigation }) {
 
       <TouchableOpacity onPress={pickImage}>
         <Image
-          source={avatar ? { uri: avatar } : require('../assets/avatar_placeholder.png')}
+          source={
+            typeof avatar === 'string'
+              ? avatar.startsWith('file://') || avatar.startsWith('http')
+                ? { uri: avatar }
+                : getAvatarImage(avatar)
+              : require('../assets/avatar_placeholder.png')
+          }
           style={styles.avatar}
         />
       </TouchableOpacity>
+
+      <View style={{ marginVertical: 12 }}>
+        <Text style={{ fontWeight: '600', marginBottom: 6 }}>Choose an avatar:</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-evenly' }}>
+          {avatarOptions.map((icon, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={async () => {
+                try {
+                  const assetUri = Image.resolveAssetSource(icon).uri;
+                  const assetName = assetUri.match(/avatar\d\.png/)?.[0] ?? 'avatar1.png';
+                  setAvatar(assetName);
+                  console.log('🖼️ Selected in-app avatar:', assetName);
+                  if (auth.currentUser) {
+                    await saveUserData({ avatar: assetName });
+                  }
+                } catch (error) {
+                  console.error('Failed to save avatar:', error);
+                  Alert.alert('Error', 'Unable to save avatar. Please try again.');
+                }
+              }}
+            >
+              <Image
+                source={icon}
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 30,
+                  borderWidth:
+                    avatar && avatar === (Image.resolveAssetSource(icon).uri.match(/avatar\d\.png/)?.[0] ?? 'avatar1.png')
+                      ? 2
+                      : 0,
+                  borderColor: '#4caf50',
+                  marginHorizontal: 6,
+                }}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
 
       <Button title="Take a New Photo" onPress={takePhoto} />
 
