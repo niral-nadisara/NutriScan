@@ -6,6 +6,8 @@ import {
   Alert,
   TextInput,
   TouchableOpacity,
+  Animated,
+  Easing,
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
@@ -13,6 +15,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/config';
 import { getUserData, saveUserData } from '../firebase/firestoreHelpers';
+import { PinchGestureHandler, State } from 'react-native-gesture-handler';
 import Slider from '@react-native-community/slider';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -20,16 +23,42 @@ export default function ScanScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [manualCode, setManualCode] = useState('');
   const [scanned, setScanned] = useState(false);
-  const [zoom, setZoom] = useState(0);
   const cameraRef = useRef(null);
+  const animatedValue = useRef(new Animated.Value(0)).current;
+  const pinchScale = useRef(new Animated.Value(1)).current;
+  const [zoom, setZoom] = useState(0);
 
   useEffect(() => {
-    if (!permission?.granted) {
-      requestPermission();
-    }
-  }, [permission]);
+    let baseZoom = zoom;
+  
+    const listener = pinchScale.addListener(({ value }) => {
+      const newZoom = Math.min(1, Math.max(0, baseZoom * value));
+      setZoom(newZoom);
+    });
+  
+    return () => {
+      pinchScale.removeListener(listener);
+    };
+  }, [zoom]);
 
-  const saveScanToHistory = async (barcode) => {
+  const triggerBorderBlink = (color) => {
+    setBorderColor(color);
+    blinkAnim.setValue(0);
+    Animated.sequence([
+      Animated.timing(blinkAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+      Animated.timing(blinkAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start(() => setBorderColor('#ccc'));
+  };
+  
+  const saveScanToHistory = async (barcode, name, score) => {
     if (!auth.currentUser) return;
 
     try {
@@ -39,6 +68,8 @@ export default function ScanScreen({ navigation }) {
       const updatedHistory = [
         {
           barcode,
+          name: name || 'Unknown Product',
+          score: typeof score === 'number' ? score : null,
           timestamp: Date.now(),
         },
         ...currentHistory.slice(0, 49),
@@ -60,8 +91,27 @@ export default function ScanScreen({ navigation }) {
   const handleBarcodeScanned = async ({ data }) => {
     if (!scanned) {
       setScanned(true);
-      await saveScanToHistory(data);
-      navigation.navigate('Result', { barcode: data });
+      try {
+        const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${data}`);
+        const result = await res.json();
+  
+        if (!result || result.status === 0 || !result.product) {
+          Alert.alert("Not Found", "No product found for this barcode.");
+          return;
+        }
+  
+        const product = result.product;
+        console.log('✅ Product Name:', product.product_name);
+        //console.log('✅ Full Product Data:', product);
+  
+        await saveScanToHistory(data, product.product_name, product.nutriscore_score);
+        const isHealthy = product.nutriscore_score < 5;
+        triggerBorderBlink(isHealthy ? 'green' : 'red');
+        navigation.navigate('Result', { barcode: data });
+      } catch (err) {
+        console.error('❌ Fetch error in scan:', err);
+        Alert.alert("Error", "Failed to fetch product information.");
+      }
     }
   };
 
@@ -159,6 +209,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 12,
     marginBottom: 20,
+    borderColor: '#ccc',
+    borderWidth: 1,
   },
   camera: {
     flex: 1,
@@ -199,6 +251,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  scanLine: {
+    position: 'absolute',
+    top: 10,
+    left: '5%',
+    width: '90%',
+    height: 2,
+    backgroundColor: 'red',
+    opacity: 0.8,
   },
   sliderContainer: {
     marginTop: 10,

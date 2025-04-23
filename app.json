@@ -1,5 +1,8 @@
 {
   "expo": {
+    "experimental": {
+    "newArchEnabled": true
+    },
     "name": "NutriScan",
     "slug": "NutriScan",
     "owner": "niralsara",
