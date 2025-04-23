@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, Alert, ImageBackground, TouchableOpacity } from 'react-native';
+import { ScanBarcode } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import alternativesData from '../assets/data/clean_alternatives.json';
 import { getUserData } from '../firebase/firestoreHelpers';
+import { analyzeIngredientsWithAI } from '../utils/analyzeIngredients';
 
 export default function ResultScreen({ route, navigation }) {
   const { barcode } = route.params;
@@ -9,57 +12,57 @@ export default function ResultScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [ingredients, setIngredients] = useState([]);
   const [alternatives, setAlternatives] = useState([]);
+  const [aiResult, setAiResult] = useState(null);
 
   useEffect(() => {
     fetchProduct();
   }, []);
 
-  const getCleanAlternatives = (category = 'chips') => {
-    return alternativesData[category.toLowerCase()] || [];
-  };
-
+  // Fetch clean alternatives from USDA API, fallback to local data if none found
   const fetchAlternatives = async (categories_tags = []) => {
     try {
       const userData = await getUserData();
       const prefs = userData?.preferences || {};
+      const tags = categories_tags.map(tag => tag.replace('en:', '').replace(/-/g, ' '));
+      const query = tags.join(', ');
+      console.log('🔍 USDA fallback will search using:', query);
 
-      const keyword = [...categories_tags].reverse().find(tag =>
-        !tag.includes('plant') && !tag.includes('foods') && !tag.includes('beverages')
-      )?.split(':')[1] || 'chips';
+      const apiKey = process.env.EXPO_PUBLIC_USDA_API_KEY;
+      const searchUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=10&api_key=${apiKey}`;
+      const response = await fetch(searchUrl);
+      const data = await response.json();
 
-      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${keyword}&search_simple=1&action=process&json=1`;
+      let matches = [];
 
-      const res = await fetch(url);
-      const data = await res.json();
+      if (data.foods && data.foods.length > 0) {
+        matches = data.foods
+          .filter(f => f.ingredients && !/preservative|artificial|maltodextrin|mono- and diglycerides|emulsifier/i.test(f.ingredients))
+          .map(f => ({
+            name: f.description,
+            brand: f.brandName,
+            image: null,
+            ingredients: f.ingredients,
+            score: 85,
+          }));
 
-      const cleanAlts = data.products.filter(p => {
-        const meetsOrganic = prefs.preferOrganic ? p.labels_tags?.includes('organic') : true;
-        const meetsVegan = prefs.preferVegan ? p.labels_tags?.includes('vegan') : true;
-        const meetsSodium = prefs.avoidSodium ? (p.nutriments?.salt || 0) <= 1.2 : true;
-        const noAdditives = prefs.hideAdditives ? !(p.ingredients_text || '').match(/e\d{3}/i) : true;
-
-        return (
-          p.nova_group <= 2 &&
-          p.product_name &&
-          p.image_front_url &&
-          p.categories_tags?.some(tag => tag.includes(keyword)) &&
-          meetsOrganic && meetsVegan && meetsSodium && noAdditives
-        );
-      }).slice(0, 5);
-
-      if (cleanAlts.length === 0) {
-        const fallbackAlts = getCleanAlternatives(keyword);
-        setAlternatives(fallbackAlts);
-      } else {
-        setAlternatives(cleanAlts);
+        console.log(`✅ Found ${matches.length} USDA alternatives for: ${query}`);
       }
+
+      if (matches.length === 0) {
+        console.warn(`⚠️ USDA returned no valid results. Falling back to local DB for: ${tags}`);
+        const keyword = tags.find(tag => Object.keys(alternativesData).includes(tag.toLowerCase())) || 'chips';
+        matches = alternativesData[keyword.toLowerCase()] || [];
+        console.log(`📦 Fallback local alternatives: ${matches.length} items found for "${keyword}"`);
+      }
+
+      setAlternatives(matches.slice(0, 5));
     } catch (err) {
-      console.error('❌ Fetch error for alternatives:', err);
-      const fallbackAlts = getCleanAlternatives('chips');
-      setAlternatives(fallbackAlts);
+      console.warn('⚠️ Failed to fetch alternatives:', err.message || err);
+      setAlternatives([]);
     }
   };
 
+  // Fetch product data from Open Food Facts API
   const fetchProduct = async () => {
     try {
       const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}`);
@@ -76,15 +79,27 @@ export default function ResultScreen({ route, navigation }) {
       if (productData.ingredients_text) {
         const cleanIngredients = classifyIngredients(productData.ingredients_text);
         setIngredients(cleanIngredients);
+        try {
+          const analysis = await analyzeIngredientsWithAI(productData.ingredients_text);
+          setAiResult(analysis);
+        } catch (e) {
+          console.warn('⚠️ AI analysis failed:', e.message || e);
+        }
       }
 
       if (productData.categories_tags?.length) {
         fetchAlternatives(productData.categories_tags);
+
+        const joinedKeywords = productData.categories_tags
+          .map(tag => tag.replace('en:', '').replace(/-/g, ' '))
+          .join(', ');
+        console.log('🔍 Fetched alternatives for categories:', productData.categories_tags);
+        console.log('🔍 USDA fallback will search using:', joinedKeywords);
       }
 
     } catch (err) {
       console.error('❌ Fetch error:', err);
-      Alert.alert("Error", "Failed to load product data.");
+      console.warn("⚠️ Failed to load product data.");
     } finally {
       setLoading(false);
     }
@@ -139,6 +154,10 @@ export default function ResultScreen({ route, navigation }) {
     const nova = product.nutriments['nova-group'] || 0;
     const fruitsVeggies = product.nutriments['fruits-vegetables-nuts-estimate-from-ingredients_100g'] || 0;
 
+    // Add lists for unhealthy oils and ultra-processed keywords
+    const unhealthyOils = ['cottonseed', 'canola', 'palm', 'soybean', 'vegetable oil'];
+    const ultraProcessedKeywords = ['maltodextrin', 'mono- and diglycerides', 'artificial', 'emulsifier', 'preservative'];
+
     if (fat > 25) score -= 20;
     if (saturatedFat > 4) score -= 15;
     if (sugars > 20) score -= 20;
@@ -150,8 +169,20 @@ export default function ResultScreen({ route, navigation }) {
     const harmfulCount = ingredients.filter((i) => i.type === 'harmful').length;
     const moderateCount = ingredients.filter((i) => i.type === 'moderate').length;
 
+    // Penalize for unhealthy oils
+    const oilPenalty = ingredients.filter(i =>
+      unhealthyOils.some(oil => i.name.toLowerCase().includes(oil))
+    ).length * 5;
+
+    // Penalize for ultra-processed additives
+    const ultraProcessedPenalty = ingredients.filter(i =>
+      ultraProcessedKeywords.some(term => i.name.toLowerCase().includes(term))
+    ).length * 5;
+
     score -= harmfulCount * 10;
     score -= moderateCount * 5;
+    score -= oilPenalty;
+    score -= ultraProcessedPenalty;
 
     return Math.max(score, 5);
   };
@@ -170,89 +201,163 @@ export default function ResultScreen({ route, navigation }) {
   const score = calculateHealthScore();
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {product.image_front_url && (
-        <Image source={{ uri: product.image_front_url }} style={styles.image} />
-      )}
-      <Text style={styles.name}>{product.product_name}</Text>
-      <Text style={styles.brand}>{product.brands}</Text>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ingredients:</Text>
-        <Text style={styles.legend}>🟢 Clean   🟠 Suspicious   🔴 Harmful</Text>
-        {ingredients.map((item, idx) => (
-          <View key={idx} style={styles.ingredientRow}>
-            <View
-              style={[
-                styles.circle,
-                {
-                  backgroundColor:
-                    item.type === 'harmful' ? 'red' : item.type === 'moderate' ? 'orange' : 'green',
-                },
-              ]}
-            />
-            <Text style={styles.ingredientText}>{item.name}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Nutritional Breakdown:</Text>
-        <Text style={styles.nutrientLine}>
-          🧂 Sodium: {(Number(product.nutriments.salt) || 0).toFixed(2)} g → {product.nutriments.salt > 1.5 ? 'High ❌' : 'Acceptable ✅'}
-        </Text>
-        <Text style={styles.nutrientLine}>
-          🍭 Sugars: {(Number(product.nutriments.sugars) || 0).toFixed(2)} g → {product.nutriments.sugars > 20 ? 'High ❌' : 'Good ✅'}
-        </Text>
-        <Text style={styles.nutrientLine}>
-          🧈 Fat: {(Number(product.nutriments.fat) || 0).toFixed(2)} g → {product.nutriments.fat > 15 ? 'High ❌' : 'Moderate ✅'}
-        </Text>
-        <Text style={styles.nutrientLine}>
-          🔥 Energy: {(Number(product.nutriments['energy-kcal']) || 0).toFixed(2)} kcal
-        </Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Health Score:</Text>
-        <Text style={[styles.score, { color: score >= 70 ? 'green' : score >= 50 ? 'orange' : 'red' }]}>
-          {score} / 100
-        </Text>
-      </View>
-
-      {alternatives.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Clean Alternatives:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {alternatives.map((alt, idx) => (
-              <View key={idx} style={styles.altCard}>
-                <Image source={{ uri: alt.image_front_url || alt.image }} style={styles.altImage} />
-                <Text style={styles.altName} numberOfLines={2}>{alt.product_name || alt.name}</Text>
+    <ImageBackground
+      source={require('../assets/home_bg.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <LinearGradient colors={['#E0F7FAAA', '#B2EBF2AA']} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.overlayBox}>
+            <Text style={styles.name}>{product.product_name}</Text>
+            {product.image_front_url && (
+              <View style={{ alignItems: 'center', width: '100%' }}>
+                <Image source={{ uri: product.image_front_url }} style={styles.image} />
               </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
+            )}
+            <Text style={styles.brand}>{product.brands}</Text>
 
-      <View style={{ marginTop: 30 }}>
-        <Text style={{ textAlign: 'center', marginBottom: 8 }}>Want to scan another item?</Text>
-        <Text
-          style={{
-            textAlign: 'center',
-            padding: 10,
-            backgroundColor: '#4caf50',
-            color: 'white',
-            borderRadius: 6,
-            overflow: 'hidden',
-          }}
-          onPress={() => navigation.navigate('Tabs', {
-            screen: 'Scan',
-            params: { screen: 'ScanScreen' },
-          })}
-        >
-          Rescan
-        </Text>
-      </View>
-    </ScrollView>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Ingredients:</Text>
+              <View style={styles.tagContainer}>
+                {ingredients.map((item, idx) => (
+                  <View
+                    key={idx}
+                    style={[
+                      styles.ingredientTag,
+                      item.type === 'harmful'
+                        ? styles.tagHarmful
+                        : item.type === 'moderate'
+                        ? styles.tagModerate
+                        : styles.tagClean,
+                    ]}
+                  >
+                    <Text style={styles.tagText}>{item.name}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Nutritional Breakdown:</Text>
+              {/* Tooltips could be implemented here, e.g.: */}
+              {/* <Tooltip popover={<Text>High sodium can raise blood pressure</Text>}><Text>Sodium:</Text></Tooltip> */}
+              <View style={styles.nutritionRow}>
+                <Text style={styles.nutritionLabel}>Sodium:</Text>
+                <Text
+                  style={[
+                    styles.nutritionValue,
+                    { color: product.nutriments.salt > 1.5 ? '#e53935' : '#43a047' }
+                  ]}
+                >
+                  {(Number(product.nutriments.salt) || 0).toFixed(2)} g — {product.nutriments.salt > 1.5 ? 'High' : 'Acceptable'}
+                </Text>
+              </View>
+              <View style={styles.nutritionRow}>
+                <Text style={styles.nutritionLabel}>Sugars:</Text>
+                <Text
+                  style={[
+                    styles.nutritionValue,
+                    { color: product.nutriments.sugars > 20 ? '#e53935' : '#43a047' }
+                  ]}
+                >
+                  {(Number(product.nutriments.sugars) || 0).toFixed(2)} g — {product.nutriments.sugars > 20 ? 'High' : 'Good'}
+                </Text>
+              </View>
+              <View style={styles.nutritionRow}>
+                <Text style={styles.nutritionLabel}>Fat:</Text>
+                <Text
+                  style={[
+                    styles.nutritionValue,
+                    { color: product.nutriments.fat > 15 ? '#e53935' : '#fb8c00' }
+                  ]}
+                >
+                  {(Number(product.nutriments.fat) || 0).toFixed(2)} g — {product.nutriments.fat > 15 ? 'High' : 'Moderate'}
+                </Text>
+              </View>
+              <View style={styles.nutritionRow}>
+                <Text style={styles.nutritionLabel}>Energy:</Text>
+                <Text style={styles.nutritionValue}>
+                  {(Number(product.nutriments['energy-kcal']) || 0).toFixed(2)} kcal
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Health Score</Text>
+              <View style={styles.scoreRow}>
+                <Text style={styles.scoreVerdict}>
+                  {score >= 80 ? '🥗 Excellent' : score >= 50 ? '⚖️ Moderate' : '❗ Poor'}
+                </Text>
+                <Text style={styles.scoreLabel}>{score} / 100</Text>
+              </View>
+              <View style={styles.scoreBarContainer}>
+                <View
+                  style={[
+                    styles.scoreBarFill,
+                    {
+                      width: `${score}%`,
+                      backgroundColor: score >= 70 ? '#66bb6a' : score >= 50 ? '#ffa726' : '#ef5350',
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+
+            {aiResult && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>AI Ingredient Analysis</Text>
+
+                {aiResult.positives?.length > 0 && (
+                  <View style={styles.analysisBoxPositive}>
+                    <Text style={styles.analysisLabel}>Positives</Text>
+                    {aiResult.positives.map((item, index) => (
+                      <Text key={index} style={styles.analysisText}>• {item}</Text>
+                    ))}
+                  </View>
+                )}
+
+                {aiResult.warnings?.length > 0 && (
+                  <View style={styles.analysisBoxWarning}>
+                    <Text style={styles.analysisLabel}>Warnings</Text>
+                    {aiResult.warnings.map((item, index) => (
+                      <Text key={index} style={styles.analysisText}>• {item}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {alternatives.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Clean Alternatives:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {alternatives.map((alt, idx) => (
+                    <View key={idx} style={styles.altCard}>
+                      <Image source={{ uri: alt.image_front_url || alt.image }} style={styles.altImage} />
+                      <Text style={styles.altName} numberOfLines={2}>{alt.product_name || alt.name}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            <View style={{ marginTop: 30, alignItems: 'center' }}>
+              <Text style={{ marginBottom: 10 }}>Scan another item ?</Text>
+              <TouchableOpacity
+                style={styles.rescanButton}
+                onPress={() => navigation.navigate('Tabs', {
+                  screen: 'Scan',
+                  params: { screen: 'ScanScreen' },
+                })}
+              >
+                <ScanBarcode color="white" size={28} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 
@@ -304,4 +409,116 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#333',
   },
+  overlayBox: {
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    padding: 16,
+    borderRadius: 12,
+    width: '100%',
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 6,
+  },
+  ingredientTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  tagText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  tagClean: {
+    backgroundColor: '#66bb6a', // green
+  },
+  tagModerate: {
+    backgroundColor: '#ffa726', // amber
+  },
+  tagHarmful: {
+    backgroundColor: '#ef5350', // red
+  },
+  nutritionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  nutritionLabel: {
+    fontWeight: '500',
+    color: '#444',
+    fontSize: 15,
+  },
+  nutritionValue: {
+    fontSize: 15,
+    color: '#333',
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  scoreVerdict: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  scoreLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  scoreBarContainer: {
+    height: 12,
+    width: '100%',
+    backgroundColor: '#e0e0e0',
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  scoreBarFill: {
+    height: '100%',
+    borderRadius: 6,
+  },
+  analysisBoxPositive: {
+    backgroundColor: '#e8f5e9',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+  },
+  analysisBoxWarning: {
+    backgroundColor: '#ffebee',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+  },
+  analysisLabel: {
+    fontWeight: '600',
+    fontSize: 15,
+    marginBottom: 6,
+    color: '#333',
+  },
+  analysisText: {
+    fontSize: 14,
+    color: '#444',
+    marginBottom: 4,
+  },
+  rescanButton: {
+    backgroundColor: '#4caf50',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
 });
+
+  

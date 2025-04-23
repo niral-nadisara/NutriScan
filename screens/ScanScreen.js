@@ -202,15 +202,15 @@ export default function ScanScreen({ navigation }) {
         )}
 
         {/* Manual Barcode Input */}
-        <View style={styles.manualEntry}>
+        <View style={styles.manualEntryRow}>
           <TextInput
-            style={styles.input}
+            style={styles.inputInline}
             placeholder="Or enter barcode"
             value={manualCode}
             onChangeText={setManualCode}
             keyboardType="numeric"
           />
-          <TouchableOpacity style={styles.submitButton} onPress={handleManualSubmit}>
+          <TouchableOpacity style={styles.goInlineButton} onPress={handleManualSubmit}>
             <Text style={styles.submitButtonText}>Go</Text>
           </TouchableOpacity>
         </View>
@@ -244,6 +244,13 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
+  manualEntryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
   input: {
     borderWidth: 1,
     borderColor: '#999',
@@ -251,6 +258,22 @@ const styles = StyleSheet.create({
     padding: 10,
     width: '80%',
     marginBottom: 12,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  inputInline: {
+    flexShrink: 1,
+    width: 160,
+    borderWidth: 1,
+    borderColor: '#999',
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    marginRight: 10,
     backgroundColor: 'rgba(255,255,255,0.9)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -275,6 +298,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     elevation: 3,
     marginTop: 10,
+  },
+  goInlineButton: {
+    backgroundColor: '#4CAF50',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
   },
   submitButtonText: {
     color: '#fff',

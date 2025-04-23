@@ -66,7 +66,7 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator>
           <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
-          <Stack.Screen name="Result" component={ResultScreen} options={{ title: 'Product Details' }} />
+          <Stack.Screen name="Result" component={ResultScreen}  />
           <Stack.Screen name="Auth" component={AuthScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="Preferences" component={PreferencesScreen} />
