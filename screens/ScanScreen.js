@@ -10,7 +10,9 @@ import {
   Easing,
   Keyboard,
   TouchableWithoutFeedback,
+  ImageBackground,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/config';
@@ -29,6 +31,7 @@ export default function ScanScreen({ navigation }) {
   const pinchScale = useRef(new Animated.Value(1)).current;
   const [zoom, setZoom] = useState(0);
   const [borderColor, setBorderColor] = useState('#ccc');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     let baseZoom = zoom;
@@ -93,12 +96,13 @@ export default function ScanScreen({ navigation }) {
   const handleBarcodeScanned = async ({ data }) => {
     if (!scanned) {
       setScanned(true);
+      setErrorMsg('');
       try {
         const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${data}`);
         const result = await res.json();
   
         if (!result || result.status === 0 || !result.product) {
-          Alert.alert("Not Found", "No product found for this barcode.");
+          setErrorMsg("❌ No product found for this barcode.");
           return;
         }
   
@@ -112,16 +116,17 @@ export default function ScanScreen({ navigation }) {
         navigation.navigate('Result', { barcode: data });
       } catch (err) {
         console.error('❌ Fetch error in scan:', err);
-        Alert.alert("Error", "Failed to fetch product information.");
+        setErrorMsg("❌ Failed to fetch product information.");
       }
     }
   };
 
   const handleManualSubmit = async () => {
     if (!manualCode) {
-      Alert.alert('Enter a valid barcode');
+      setErrorMsg("⚠️ Please enter a valid barcode before submitting.");
       return;
     }
+    setErrorMsg('');
     await saveScanToHistory(manualCode);
     navigation.navigate('Result', { barcode: manualCode });
   };
@@ -131,7 +136,12 @@ export default function ScanScreen({ navigation }) {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={styles.container}>
+      <ImageBackground
+        source={require('../assets/home_bg.png')}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      >
+        <LinearGradient colors={['#E0F7FAAA', '#B2EBF2AA']} style={styles.container}>
         {/* Back Button */}
         <TouchableOpacity
           style={styles.backButton}
@@ -165,26 +175,37 @@ export default function ScanScreen({ navigation }) {
 
         {/* Zoom Slider */}
         <View style={styles.sliderContainer}>
-          <Text style={styles.zoomLabel}>Zoom</Text>
-          <Slider
-            style={{ width: '90%' }}
-            minimumValue={0}
-            maximumValue={1}
-            step={0.01}
-            value={zoom}
-            onValueChange={setZoom}
-            minimumTrackTintColor="#4CAF50"
-            maximumTrackTintColor="#ccc"
-            thumbTintColor="#4CAF50"
-          />
+          <View style={styles.zoomLabelOverlay}>
+            <Text style={styles.zoomLabel}>Look Closer, Tasty Clues Ahead!</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', width: '90%' }}>
+            <Ionicons name="remove-circle-outline" size={22} color="#777" style={{ marginRight: 8 }} />
+            <Slider
+              style={{ flex: 1 }}
+              minimumValue={0}
+              maximumValue={1}
+              step={0.01}
+              value={zoom}
+              onValueChange={setZoom}
+              minimumTrackTintColor="#4CAF50"
+              maximumTrackTintColor="#ccc"
+              thumbTintColor="#4CAF50"
+            />
+            <Ionicons name="add-circle-outline" size={22} color="#777" style={{ marginLeft: 8 }} />
+          </View>
         </View>
+
+        {errorMsg !== '' && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{errorMsg}</Text>
+          </View>
+        )}
 
         {/* Manual Barcode Input */}
         <View style={styles.manualEntry}>
-          <Text style={{ marginBottom: 8 }}>Or enter barcode manually:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter barcode"
+            placeholder="Or enter barcode"
             value={manualCode}
             onChangeText={setManualCode}
             keyboardType="numeric"
@@ -193,7 +214,8 @@ export default function ScanScreen({ navigation }) {
             <Text style={styles.submitButtonText}>Go</Text>
           </TouchableOpacity>
         </View>
-      </View>
+        </LinearGradient>
+      </ImageBackground>
     </TouchableWithoutFeedback>
   );
 }
@@ -229,6 +251,12 @@ const styles = StyleSheet.create({
     padding: 10,
     width: '80%',
     marginBottom: 12,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   backButton: {
     position: 'absolute',
@@ -242,8 +270,8 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     borderRadius: 8,
     elevation: 3,
     marginTop: 10,
@@ -272,5 +300,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 6,
+    textShadowColor: '#fff',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
+  zoomLabelOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginBottom: 6,
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#e53935',
+    padding: 12,
+    marginTop: 10,
+    marginHorizontal: 20,
+    borderRadius: 8,
+  },
+  errorText: {
+    color: '#c62828',
+    fontWeight: '500',
+    textAlign: 'left',
+  }
 });

@@ -16,6 +16,8 @@ import {
 } from 'react-native';
 import { auth } from '../firebase/config';
 import { getUserData } from '../firebase/firestoreHelpers';
+import { ImageBackground } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const categories = ['All', 'Snacks', 'Beverages', 'Dairy', 'Organic', 'Gluten-Free'];
 

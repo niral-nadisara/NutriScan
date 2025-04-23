@@ -8,7 +8,9 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  ImageBackground,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { makeRedirectUri } from 'expo-auth-session';
@@ -75,52 +77,75 @@ export default function AuthScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome to NutriScan</Text>
+    <ImageBackground
+      source={require('../assets/home_bg.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <LinearGradient colors={['#E0F7FAAA', '#B2EBF2AA']} style={styles.container}>
+        <View style={styles.formOverlay}>
+          <Text style={styles.title}>Welcome to SafeBites</Text>
 
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        style={styles.input}
-        placeholderTextColor="#999"
-      />
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-        placeholderTextColor="#999"
-      />
+          <TextInput
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            style={styles.input}
+            placeholderTextColor="#999"
+          />
+          <TextInput
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={styles.input}
+            placeholderTextColor="#999"
+          />
 
-      <Pressable style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Log In</Text>
-      </Pressable>
+          <Pressable style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Log In</Text>
+          </Pressable>
 
-      <Pressable style={[styles.button, styles.secondaryButton]} onPress={handleSignUp}>
-        <Text style={[styles.buttonText, { color: '#444' }]}>Sign Up</Text>
-      </Pressable>
+          <Pressable style={[styles.button, styles.secondaryButton]} onPress={handleSignUp}>
+            <Text style={[styles.buttonText, { color: '#444' }]}>Sign Up</Text>
+          </Pressable>
 
-      <Text style={styles.or}>──────── OR ────────</Text>
+          <Text style={styles.or}>──────── OR ────────</Text>
 
-      <Pressable style={styles.googleButton} onPress={() => promptAsync()} disabled={!request}>
-        <Image
-          source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
-          style={styles.googleIcon}
-        />
-        <Text style={styles.googleButtonText}>Sign in with Google</Text>
-      </Pressable>
+          <Pressable style={styles.googleButton} onPress={() => promptAsync()} disabled={!request}>
+            <Image
+              source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
+              style={styles.googleIcon}
+            />
+            <Text style={styles.googleButtonText}>Sign in with Google</Text>
+          </Pressable>
 
-      {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
-      {loading && <ActivityIndicator size="small" color="#4CAF50" style={{ marginTop: 10 }} />}
-    </View>
+          {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
+          {loading && <ActivityIndicator size="small" color="#4CAF50" style={{ marginTop: 10 }} />}
+        </View>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 28, justifyContent: 'center', backgroundColor: '#f6fef9' },
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  container: { flex: 1, padding: 28, justifyContent: 'center' },
+  formOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    padding: 24,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
+  },
   title: { fontSize: 24, fontWeight: '600', color: '#2e7d32', textAlign: 'center', marginBottom: 32 },
   input: {
     backgroundColor: '#fff',
@@ -141,7 +166,7 @@ const styles = StyleSheet.create({
   buttonText: { color: 'white', fontWeight: '600' },
   or: { textAlign: 'center', color: '#888', marginVertical: 20 },
   googleButton: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(235, 16, 16, 0.8)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -151,6 +176,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   googleIcon: { width: 18, height: 18, marginRight: 10 },
-  googleButtonText: { fontWeight: '600', color: '#444' },
-  error: { color: 'red', marginTop: 10, textAlign: 'center' },
+  googleButtonText: { fontWeight: '600', color: 'white' },
+  error: {
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#e53935',
+    padding: 12,
+    marginTop: 16,
+    color: '#c62828',
+    fontWeight: '500',
+    borderRadius: 8,
+    textAlign: 'left',
+  },
 });
