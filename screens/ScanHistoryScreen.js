@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity, ImageBackground } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { auth } from '../firebase/config';
 import { getUserData } from '../firebase/firestoreHelpers';
 
@@ -34,18 +35,29 @@ export default function ScanHistoryScreen({ navigation }) {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Scan History</Text>
-      {history.length > 0 ? (
-        <FlatList
-          data={history}
-          keyExtractor={(_, index) => index.toString()}
-          renderItem={renderItem}
-        />
-      ) : (
-        <Text style={styles.empty}>No scan history found.</Text>
-      )}
-    </View>
+    <ImageBackground
+      source={require('../assets/home_bg.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <LinearGradient
+        colors={['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.9)']}
+        style={{ flex: 1 }}
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>Scan History</Text>
+          {history.length > 0 ? (
+            <FlatList
+              data={history}
+              keyExtractor={(_, index) => index.toString()}
+              renderItem={renderItem}
+            />
+          ) : (
+            <Text style={styles.empty}>No scan history found.</Text>
+          )}
+        </View>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 

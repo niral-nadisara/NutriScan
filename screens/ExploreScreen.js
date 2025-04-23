@@ -1,6 +1,5 @@
-// ✅ Merged personalized filtering functionality into main Explore layout
 import React, { useState, useEffect, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -14,6 +13,7 @@ import {
   Modal,
   Keyboard,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/config';
 import { getUserData } from '../firebase/firestoreHelpers';
 import { ImageBackground } from 'react-native';
@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const categories = ['All', 'Snacks', 'Beverages', 'Dairy', 'Organic', 'Gluten-Free'];
 
 export default function ExploreScreen() {
+  const navigation = useNavigation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -131,99 +132,105 @@ export default function ExploreScreen() {
     return <ActivityIndicator style={{ marginTop: 40 }} size="large" color="#3b82f6" />;
 
   return (
-    <View style={[styles.container, styles.safeAreaFix]}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => {
-          setSearchQuery('');
-          setSelectedCategory('All');
-          setSelectedProduct(null);
-          setProductDetails(null);
-          Keyboard.dismiss();
-        }}
+    <ImageBackground
+      source={require('../assets/home_bg.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <LinearGradient
+        colors={['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.9)']}
+        style={{ flex: 1 }}
       >
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
-      <TextInput
-        style={styles.search}
-        placeholder="Search products..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-        {categories.map((cat) => (
+        <View style={[styles.container, styles.safeAreaFix]}>
           <TouchableOpacity
-            key={cat}
-            style={[styles.categoryChip, selectedCategory === cat && styles.categoryChipSelected]}
-            onPress={() => setSelectedCategory(cat)}
+            onPress={() => navigation.goBack()}
+            style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
           >
-            <Text style={selectedCategory === cat ? styles.chipTextSelected : styles.chipText}>{cat}</Text>
+            <Ionicons name="chevron-back" size={24} color="#2563eb" />
+            <Text style={{ fontSize: 17, fontWeight: '500', color: '#2563eb' }}>Tabs</Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+          <TextInput
+            style={styles.search}
+            placeholder="Search products..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
 
-      {renderPreferenceFilters()}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+            {categories.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.categoryChip, selectedCategory === cat && styles.categoryChipSelected]}
+                onPress={() => setSelectedCategory(cat)}
+              >
+                <Text style={selectedCategory === cat ? styles.chipTextSelected : styles.chipText}>{cat}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-      <FlatList
-        data={filteredProducts}
-        numColumns={1}
-        keyExtractor={(item) => item.id || item.code}
-        renderItem={({ item }) => {
-          const tags = (item.labels_tags || []).map((t) => t.toLowerCase().replace(/^en:/, ''));
-          const visibleTags = [];
-          if (preferences.preferVegan && tags.includes('vegan')) visibleTags.push('Vegan');
-          if (preferences.preferOrganic && tags.includes('organic')) visibleTags.push('Organic');
-          if (preferences.hideAdditives && tags.includes('no-additives')) visibleTags.push('No Additives');
-          if (preferences.noGmos && (tags.includes('no-gmos') || tags.includes('non-gmo-project'))) visibleTags.push('Non-GMO');
-          if (preferences.noAddedSugar && tags.includes('no-added-sugar')) visibleTags.push('No Added Sugar');
-          if (preferences.noPreservatives && tags.includes('no-preservatives')) visibleTags.push('No Preservatives');
-          if (preferences.ecoPackaging && tags.some((t) => ['fsc', 'fsc-recycling', 'eco-emballage', 'green-dot'].includes(t))) visibleTags.push('Eco-Friendly');
-          if (preferences.avoidAllergens && (item.allergens_tags || []).length === 0) visibleTags.push('Allergen-Free');
+          {renderPreferenceFilters()}
 
-          return (
-            <TouchableOpacity style={styles.card} onPress={() => handleProductPress(item)}>
-              <Image source={{ uri: item.image_front_small_url }} style={styles.image} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name} numberOfLines={2}>{item.product_name}</Text>
-                {visibleTags.length > 0 && (
-                  <View style={styles.tagRow}>
-                    {visibleTags.map((tag, index) => (
-                      <Text key={index} style={styles.tag}>{tag}</Text>
-                    ))}
+          <FlatList
+            data={filteredProducts}
+            numColumns={1}
+            keyExtractor={(item) => item.id || item.code}
+            renderItem={({ item }) => {
+              const tags = (item.labels_tags || []).map((t) => t.toLowerCase().replace(/^en:/, ''));
+              const visibleTags = [];
+              if (preferences.preferVegan && tags.includes('vegan')) visibleTags.push('Vegan');
+              if (preferences.preferOrganic && tags.includes('organic')) visibleTags.push('Organic');
+              if (preferences.hideAdditives && tags.includes('no-additives')) visibleTags.push('No Additives');
+              if (preferences.noGmos && (tags.includes('no-gmos') || tags.includes('non-gmo-project'))) visibleTags.push('Non-GMO');
+              if (preferences.noAddedSugar && tags.includes('no-added-sugar')) visibleTags.push('No Added Sugar');
+              if (preferences.noPreservatives && tags.includes('no-preservatives')) visibleTags.push('No Preservatives');
+              if (preferences.ecoPackaging && tags.some((t) => ['fsc', 'fsc-recycling', 'eco-emballage', 'green-dot'].includes(t))) visibleTags.push('Eco-Friendly');
+              if (preferences.avoidAllergens && (item.allergens_tags || []).length === 0) visibleTags.push('Allergen-Free');
+
+              return (
+                <TouchableOpacity style={styles.card} onPress={() => handleProductPress(item)}>
+                  <Image source={{ uri: item.image_front_small_url }} style={styles.image} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.name} numberOfLines={2}>{item.product_name}</Text>
+                    {visibleTags.length > 0 && (
+                      <View style={styles.tagRow}>
+                        {visibleTags.map((tag, index) => (
+                          <Text key={index} style={styles.tag}>{tag}</Text>
+                        ))}
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          );
-        }}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
+                </TouchableOpacity>
+              );
+            }}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
 
-      {selectedProduct && productDetails && (
-        <Modal visible={true} animationType="slide" onRequestClose={() => {
-          setSelectedProduct(null);
-          setProductDetails(null);
-        }}>
-          <ScrollView style={styles.modalContent}>
-            <Image source={{ uri: selectedProduct.image_front_small_url }} style={styles.modalImage} />
-            <Text style={styles.modalTitle}>{selectedProduct.product_name}</Text>
-            <Text style={styles.modalSubtitle}>Ingredients:</Text>
-            {productDetails.ingredientList ? (
-              <Text style={styles.modalText}>{productDetails.ingredientList}</Text>
-            ) : (
-              <Text style={styles.modalText}>No ingredient details available.</Text>
-            )}
-            <TouchableOpacity style={styles.closeButton} onPress={() => {
+          {selectedProduct && productDetails && (
+            <Modal visible={true} animationType="slide" onRequestClose={() => {
               setSelectedProduct(null);
               setProductDetails(null);
             }}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Modal>
-      )}
-    </View>
+              <ScrollView style={styles.modalContent}>
+                <Image source={{ uri: selectedProduct.image_front_small_url }} style={styles.modalImage} />
+                <Text style={styles.modalTitle}>{selectedProduct.product_name}</Text>
+                <Text style={styles.modalSubtitle}>Ingredients:</Text>
+                {productDetails.ingredientList ? (
+                  <Text style={styles.modalText}>{productDetails.ingredientList}</Text>
+                ) : (
+                  <Text style={styles.modalText}>No ingredient details available.</Text>
+                )}
+                <TouchableOpacity style={styles.closeButton} onPress={() => {
+                  setSelectedProduct(null);
+                  setProductDetails(null);
+                }}>
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </Modal>
+          )}
+        </View>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 
@@ -244,7 +251,7 @@ const styles = StyleSheet.create({
   safeAreaFix: {
     paddingTop: 50,
   },
-  container: { flex: 1, padding: 12, backgroundColor: '#f9f9f9' },
+  container: { flex: 1, padding: 12 },
   search: {
     backgroundColor: '#fff',
     padding: 10,
