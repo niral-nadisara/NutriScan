@@ -9,10 +9,10 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function useGoogleAuth() {
   const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: '1075499022021-7pv1l5m9e5lg822mbgvk74eo11gib6sf.apps.googleusercontent.com',
-    webClientId: '1075499022021-7pv1l5m9e5lg822mbgvk74eo11gib6sf.apps.googleusercontent.com',
-    iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
-    androidClientId: 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com',
+    expoClientId: process.env.EXPO_GOOGLE_CLIENT_ID,
+    webClientId: process.env.WEB_GOOGLE_CLIENT_ID,
+    iosClientId: process.env.IOS_GOOGLE_CLIENT_ID,
+    androidClientId: process.env.ANDROID_CLIENT_ID,
     useProxy: true,
     redirectUri: makeRedirectUri({ useProxy: true }),
   });
