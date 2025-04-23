@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/config';
 import { getUserData, saveUserData } from '../firebase/firestoreHelpers';
 import Slider from '@react-native-community/slider';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ScanScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -48,6 +49,12 @@ export default function ScanScreen({ navigation }) {
       console.error('Failed to save scan history:', err);
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setScanned(false); // Reset scanning every time user returns to this screen
+    }, [])
+  );
 
   const handleBarcodeScanned = async ({ data }) => {
     if (!scanned) {
