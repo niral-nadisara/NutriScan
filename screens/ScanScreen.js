@@ -24,9 +24,11 @@ export default function ScanScreen({ navigation }) {
   const [manualCode, setManualCode] = useState('');
   const [scanned, setScanned] = useState(false);
   const cameraRef = useRef(null);
+  const blinkAnim = useRef(new Animated.Value(0)).current;
   const animatedValue = useRef(new Animated.Value(0)).current;
   const pinchScale = useRef(new Animated.Value(1)).current;
   const [zoom, setZoom] = useState(0);
+  const [borderColor, setBorderColor] = useState('#ccc');
 
   useEffect(() => {
     let baseZoom = zoom;

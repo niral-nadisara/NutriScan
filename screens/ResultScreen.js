@@ -244,7 +244,10 @@ export default function ResultScreen({ route, navigation }) {
             borderRadius: 6,
             overflow: 'hidden',
           }}
-          onPress={() => navigation.navigate('ScanScreen')}
+          onPress={() => navigation.navigate('Tabs', {
+            screen: 'Scan',
+            params: { screen: 'ScanScreen' },
+          })}
         >
           Rescan
         </Text>
