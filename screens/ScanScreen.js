@@ -53,6 +53,7 @@ export default function ScanScreen({ navigation }) {
   useFocusEffect(
     React.useCallback(() => {
       setScanned(false); // Reset scanning every time user returns to this screen
+      setZoom(0); // 🔄 Auto-reset zoom when user comes back
     }, [])
   );
 
@@ -137,7 +138,7 @@ export default function ScanScreen({ navigation }) {
             keyboardType="numeric"
           />
           <TouchableOpacity style={styles.submitButton} onPress={handleManualSubmit}>
-            <Text style={styles.submitButtonText}>Submit</Text>
+            <Text style={styles.submitButtonText}>Go</Text>
           </TouchableOpacity>
         </View>
       </View>
