@@ -5,18 +5,22 @@ import {
   StyleSheet,
   Alert,
   TextInput,
-  Button,
   TouchableOpacity,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/config';
 import { getUserData, saveUserData } from '../firebase/firestoreHelpers';
+import Slider from '@react-native-community/slider';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ScanScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [manualCode, setManualCode] = useState('');
   const [scanned, setScanned] = useState(false);
+  const [zoom, setZoom] = useState(0);
   const cameraRef = useRef(null);
 
   useEffect(() => {
@@ -37,7 +41,7 @@ export default function ScanScreen({ navigation }) {
           barcode,
           timestamp: Date.now(),
         },
-        ...currentHistory.slice(0, 49), // Keep last 50
+        ...currentHistory.slice(0, 49),
       ];
 
       await saveUserData({ scanHistory: updatedHistory });
@@ -45,6 +49,12 @@ export default function ScanScreen({ navigation }) {
       console.error('Failed to save scan history:', err);
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setScanned(false); // Reset scanning every time user returns to this screen
+    }, [])
+  );
 
   const handleBarcodeScanned = async ({ data }) => {
     if (!scanned) {
@@ -67,50 +77,71 @@ export default function ScanScreen({ navigation }) {
   if (!permission.granted) return <Text>No access to camera</Text>;
 
   return (
-    <View style={styles.container}>
-      {/* Back Button with Confirmation */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => {
-          Alert.alert(
-            'Go to Home',
-            'Are you sure you want to go back to the Home screen?',
-            [
-              { text: 'No', style: 'cancel' },
-              { text: 'Yes', onPress: () => navigation.navigate('Home') },
-            ]
-          );
-        }}
-      >
-        <Ionicons name="arrow-back" size={26} color="#333" />
-      </TouchableOpacity>
-
-      <View style={styles.cameraContainer}>
-        <CameraView
-          ref={cameraRef}
-          style={styles.camera}
-          facing="back"
-          onBarcodeScanned={handleBarcodeScanned}
-          barcodeScannerSettings={{
-            barcodeTypes: ['ean13', 'upc_a', 'upc_e', 'code128'],
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.container}>
+        {/* Back Button */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => {
+            Alert.alert(
+              'Go to Home',
+              'Are you sure you want to go back to the Home screen?',
+              [
+                { text: 'No', style: 'cancel' },
+                { text: 'Yes', onPress: () => navigation.navigate('Home') },
+              ]
+            );
           }}
-        />
-      </View>
-
-      <View style={styles.manualEntry}>
-        <Text style={{ marginBottom: 8 }}>Or enter barcode manually:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter barcode"
-          value={manualCode}
-          onChangeText={setManualCode}
-          keyboardType="numeric"
-        />
-        <TouchableOpacity style={styles.submitButton} onPress={handleManualSubmit}>
-        <Text style={styles.submitButtonText}>Submit</Text>
+        >
+          <Ionicons name="arrow-back" size={26} color="#333" />
         </TouchableOpacity>
+
+        {/* Camera View */}
+        <View style={styles.cameraContainer}>
+          <CameraView
+            ref={cameraRef}
+            style={styles.camera}
+            facing="back"
+            zoom={zoom}
+            onBarcodeScanned={handleBarcodeScanned}
+            barcodeScannerSettings={{
+              barcodeTypes: ['ean13', 'upc_a', 'upc_e', 'code128'],
+            }}
+          />
+        </View>
+
+        {/* Zoom Slider */}
+        <View style={styles.sliderContainer}>
+          <Text style={styles.zoomLabel}>Zoom</Text>
+          <Slider
+            style={{ width: '90%' }}
+            minimumValue={0}
+            maximumValue={1}
+            step={0.01}
+            value={zoom}
+            onValueChange={setZoom}
+            minimumTrackTintColor="#4CAF50"
+            maximumTrackTintColor="#ccc"
+            thumbTintColor="#4CAF50"
+          />
+        </View>
+
+        {/* Manual Barcode Input */}
+        <View style={styles.manualEntry}>
+          <Text style={{ marginBottom: 8 }}>Or enter barcode manually:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter barcode"
+            value={manualCode}
+            onChangeText={setManualCode}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity style={styles.submitButton} onPress={handleManualSubmit}>
+            <Text style={styles.submitButtonText}>Submit</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -167,5 +198,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  sliderContainer: {
+    marginTop: 10,
+    alignItems: 'center',
+    width: '100%',
+  },
+  zoomLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 6,
   },
 });
