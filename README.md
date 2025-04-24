@@ -60,6 +60,12 @@ FIREBASE_PROJECT_ID=your_project
 FIREBASE_STORAGE_BUCKET=your_bucket
 FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 FIREBASE_APP_ID=your_app_id
+HUGGINGFACE_API_KEY=your_hugging_face_apikey
+EXPO_PUBLIC_USDA_API_KEY=your_USDA_apikey
+EXPO_GOOGLE_CLIENT_ID=your_expo_google_client_id
+WEB_GOOGLE_CLIENT_ID=your_web_google_client_id
+IOS_GOOGLE_CLIENT_ID=your_ios_google_client_id
+ANDROID_CLIENT_ID=your_android_google_client_id
 ```
 4. Start the app
 ```
