@@ -223,11 +223,12 @@ export default function ScanScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: 100,
   },
   cameraContainer: {
-    height: 300,
+    height: 260,
     width: '90%',
     alignSelf: 'center',
     overflow: 'hidden',
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    marginTop: 12,
+    marginTop: 8,
   },
   input: {
     borderWidth: 1,
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   sliderContainer: {
-    marginTop: 10,
+    marginTop: 3,
     alignItems: 'center',
     width: '100%',
   },

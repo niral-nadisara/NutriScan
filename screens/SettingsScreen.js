@@ -77,7 +77,6 @@ export default function SettingsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
 
       <TouchableOpacity onPress={pickImage}>
         <Image
@@ -162,6 +161,8 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     alignSelf: 'center',
     marginBottom: 16,
+    borderWidth: 3,
+    borderColor: '#4caf50',
   },
   section: { marginVertical: 10 },
 });

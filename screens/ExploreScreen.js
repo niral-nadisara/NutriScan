@@ -18,6 +18,7 @@ import { auth } from '../firebase/config';
 import { getUserData } from '../firebase/firestoreHelpers';
 import { ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const categories = ['All', 'Snacks', 'Beverages', 'Dairy', 'Organic', 'Gluten-Free'];
 
@@ -40,11 +41,24 @@ export default function ExploreScreen() {
   const loadPreferencesAndProducts = async () => {
     setLoading(true);
     try {
+      const cached = await AsyncStorage.getItem('explore_products_cache');
+      let isCached = false;
+
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        setProducts(parsed);
+        isCached = true;
+        console.log('⚡ Loaded products from cache');
+      }
+
       if (auth.currentUser) {
         const data = await getUserData();
         const userPrefs = data?.preferences || {};
         setPreferences(userPrefs);
-        await fetchProducts(userPrefs);
+
+        if (!isCached) {
+          await fetchProducts(userPrefs);
+        }
       }
     } catch (err) {
       console.error('❌ Error loading preferences/products:', err);
@@ -85,6 +99,9 @@ export default function ExploreScreen() {
         const activePrefsCount = Object.values(prefs).filter(Boolean).length;
         return activePrefsCount === 0 || matchCount > 0;
       });
+
+      await AsyncStorage.setItem('explore_products_cache', JSON.stringify(filtered));
+      console.log('💾 Cached explore products');
 
       setProducts(filtered);
     } catch (err) {
