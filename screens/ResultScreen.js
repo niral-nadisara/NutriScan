@@ -51,7 +51,10 @@ export default function ResultScreen({ route, navigation }) {
       if (matches.length === 0) {
         console.warn(`⚠️ USDA returned no valid results. Falling back to local DB for: ${tags}`);
         const keyword = tags.find(tag => Object.keys(alternativesData).includes(tag.toLowerCase())) || 'chips';
-        matches = alternativesData[keyword.toLowerCase()] || [];
+        matches = (alternativesData[keyword.toLowerCase()] || []).map(item => ({
+          ...item,
+          image: item.image || item.image_front_url || null,
+        }));
         console.log(`📦 Fallback local alternatives: ${matches.length} items found for "${keyword}"`);
       }
 
