@@ -191,7 +191,7 @@ export default function ScanScreen({ navigation }) {
             zoom={zoom}
             onBarcodeScanned={handleBarcodeScanned}
             barcodeScannerSettings={{
-              barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'],
+              barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'itf14', 'gs1databar'],
             }}
           />
         </View>
@@ -259,6 +259,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: '#ccc',
     borderWidth: 1,
+    backgroundColor: 'rgba(31, 30, 30, 0.8)',
   },
   camera: {
     flex: 1,

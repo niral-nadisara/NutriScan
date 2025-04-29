@@ -143,12 +143,12 @@ export default function ResultScreen({ route, navigation }) {
       return { name, type };
     });
   };
+  // Calculate health score based on product's nutritional values
 
   const calculateHealthScore = () => {
     if (!product?.nutriments) return 50;
-
+  
     let score = 100;
-
     const fat = product.nutriments.fat || 0;
     const saturatedFat = product.nutriments['saturated-fat'] || 0;
     const sugars = product.nutriments.sugars || 0;
@@ -156,11 +156,7 @@ export default function ResultScreen({ route, navigation }) {
     const calories = product.nutriments['energy-kcal'] || 0;
     const nova = product.nutriments['nova-group'] || 0;
     const fruitsVeggies = product.nutriments['fruits-vegetables-nuts-estimate-from-ingredients_100g'] || 0;
-
-    // Add lists for unhealthy oils and ultra-processed keywords
-    const unhealthyOils = ['cottonseed', 'canola', 'palm', 'soybean', 'vegetable oil'];
-    const ultraProcessedKeywords = ['maltodextrin', 'mono- and diglycerides', 'artificial', 'emulsifier', 'preservative'];
-
+  
     if (fat > 25) score -= 20;
     if (saturatedFat > 4) score -= 15;
     if (sugars > 20) score -= 20;
@@ -168,26 +164,40 @@ export default function ResultScreen({ route, navigation }) {
     if (calories > 500) score -= 10;
     if (nova >= 4) score -= 20;
     if (fruitsVeggies === 0) score -= 10;
-
-    const harmfulCount = ingredients.filter((i) => i.type === 'harmful').length;
-    const moderateCount = ingredients.filter((i) => i.type === 'moderate').length;
-
-    // Penalize for unhealthy oils
-    const oilPenalty = ingredients.filter(i =>
-      unhealthyOils.some(oil => i.name.toLowerCase().includes(oil))
-    ).length * 5;
-
-    // Penalize for ultra-processed additives
-    const ultraProcessedPenalty = ingredients.filter(i =>
-      ultraProcessedKeywords.some(term => i.name.toLowerCase().includes(term))
-    ).length * 5;
-
+  
+    const harmfulCount = ingredients.filter(i => i.type === 'harmful').length;
+    const moderateCount = ingredients.filter(i => i.type === 'moderate').length;
+  
     score -= harmfulCount * 10;
     score -= moderateCount * 5;
-    score -= oilPenalty;
-    score -= ultraProcessedPenalty;
+  
+    // 🔍 Scan for known harmful processed additives and oils
+    const ingredientText = product.ingredients_text?.toLowerCase() || '';
+    const redFlags = [
+      'canola oil', 'palm oil', 'enriched flour', 'unbleached enriched flour',
+      'ascorbic acid', 'thiamine mononitrate', 'riboflavin',
+      'folic acid', 'dough conditioner'
+    ];
+  
+    redFlags.forEach(term => {
+      if (ingredientText.includes(term)) {
+        score -= 5;
+      }
+    });
+    // Penalize unhealthy oils
+    unhealthyOils.forEach(term => {
+      if (ingredientText.includes(term)) {
+        score -= 7;
+      }
+    });
 
-    return Math.max(score, 5);
+    // Penalize ultra-processed additives
+    ultraProcessedIngredients.forEach(term => {
+      if (ingredientText.includes(term)) {
+        score -= 7;
+      }
+    });
+    return Math.max(Math.min(score, 100), 5);
   };
 
   if (loading) {
