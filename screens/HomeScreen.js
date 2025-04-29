@@ -136,6 +136,17 @@ export default function HomeScreen({ navigation }) {
               >
                 <Text style={styles.menuText}>Scan History</Text>
               </Pressable>
+
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  handleLogout();
+                }}
+              >
+                <Text style={styles.menuText}>Logout</Text>
+              </Pressable>
+              
               <Pressable style={styles.closeBtn} onPress={() => setMenuVisible(false)}>
                 <Ionicons name="close-circle-outline" size={28} color="#555" />
               </Pressable>
