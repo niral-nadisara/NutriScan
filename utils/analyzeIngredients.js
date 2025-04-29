@@ -1,4 +1,6 @@
 export async function analyzeIngredientsWithAI(ingredientsText) {
+  let message = '{}'; // Declare message outside try-catch for accessibility
+
   const prompt = `
 You are a nutrition expert.
 
@@ -19,8 +21,6 @@ Respond ONLY with the following JSON format:
 `;
 
   try {
-    let message = '{}';
-
     const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1', {
       method: 'POST',
       headers: {
@@ -34,33 +34,26 @@ Respond ONLY with the following JSON format:
 
     const result = await response.json();
     console.log('🧠 Raw AI response:', JSON.stringify(result, null, 2));
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
     message = result?.[0]?.generated_text || '{}';
 
-    // Attempt to extract JSON from the generated text using RegExp
     const matches = message.match(/\{[\s\S]*?\}/g);
     if (!matches || matches.length === 0) {
       throw new Error("Response does not contain valid JSON.");
     }
 
-    // Use the last match which contains "positives" and "warnings"
-    const reversedMatches = matches.reverse();
-    const validJSONMatch = reversedMatches.find(str => str.includes('"positives"') && str.includes('"warnings"'));
+    const validJSONMatch = matches.reverse().find(str => str.includes('"positives"') && str.includes('"warnings"'));
 
     if (!validJSONMatch) {
       throw new Error("No valid JSON block found in response.");
     }
 
-    const jsonSubstring = validJSONMatch;
+    const parsed = JSON.parse(validJSONMatch);
 
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonSubstring);
-    } catch (parseErr) {
-      console.error('Failed to parse extracted JSON:', jsonSubstring);
-      throw parseErr;
-    }
-
-    // Optionally validate structure
     if (
       !Array.isArray(parsed.positives) ||
       !Array.isArray(parsed.warnings)
@@ -70,7 +63,8 @@ Respond ONLY with the following JSON format:
 
     return parsed;
   } catch (err) {
-    console.error('AI analysis failed:', err, '\nRaw message:', message);
+    console.log('⚠️ AI analysis warning:', err?.message || err);
+    console.log('🧠 Raw message for debugging:', message || '{}');
     return { positives: [], warnings: ['Failed to analyze ingredients.'] };
   }
 }

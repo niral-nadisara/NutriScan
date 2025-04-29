@@ -221,9 +221,7 @@ const styles = StyleSheet.create({
     color: '#004D40',
     marginBottom: 10,
     fontStyle: 'italic',
-    textShadowColor: '#fff',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadow: '0px 1px 4px #fff',
   },
   modalOverlay: {
     flex: 1,

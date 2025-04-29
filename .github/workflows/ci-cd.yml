@@ -21,6 +21,21 @@ jobs:
       - name: 🧪 Install dependencies
         run: npm install
 
+      - name: 🛠️ Setup Environment Variables
+        run: |
+          echo "FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}" >> $GITHUB_ENV
+          echo "FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}" >> $GITHUB_ENV
+          echo "FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}" >> $GITHUB_ENV
+          echo "FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}" >> $GITHUB_ENV
+          echo "FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" >> $GITHUB_ENV
+          echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> $GITHUB_ENV
+          echo "HUGGINGFACE_API_KEY=${{ secrets.HUGGINGFACE_API_KEY }}" >> $GITHUB_ENV
+          echo "EXPO_PUBLIC_USDA_API_KEY=${{ secrets.EXPO_PUBLIC_USDA_API_KEY }}" >> $GITHUB_ENV
+          echo "EXPO_GOOGLE_CLIENT_ID=${{ secrets.EXPO_GOOGLE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "WEB_GOOGLE_CLIENT_ID=${{ secrets.WEB_GOOGLE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "IOS_GOOGLE_CLIENT_ID=${{ secrets.IOS_GOOGLE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ANDROID_CLIENT_ID=${{ secrets.ANDROID_CLIENT_ID }}" >> $GITHUB_ENV
+
       - name: ⚙️ Setup Expo
         uses: expo/expo-github-action@v8
         with:

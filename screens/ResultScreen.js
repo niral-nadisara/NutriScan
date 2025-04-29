@@ -179,7 +179,30 @@ export default function ResultScreen({ route, navigation }) {
       'ascorbic acid', 'thiamine mononitrate', 'riboflavin',
       'folic acid', 'dough conditioner'
     ];
-  
+    const unhealthyOils = [
+      'canola oil',
+      'cottonseed oil',
+      'soybean oil',
+      'corn oil',
+      'sunflower oil',
+      'palm oil',
+      'rapeseed oil',
+      'vegetable oil',
+      'hydrogenated oil'
+    ];
+    
+    const ultraProcessedIngredients = [
+      'maltodextrin',
+      'monoglycerides',
+      'diglycerides',
+      'high fructose corn syrup',
+      'artificial flavor',
+      'artificial color',
+      'emulsifier',
+      'preservative',
+      'stabilizer',
+      'dough conditioner'
+    ];
     redFlags.forEach(term => {
       if (ingredientText.includes(term)) {
         score -= 5;
