@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import {
   View,
   Text,
@@ -7,7 +8,6 @@ import {
   TextInput,
   TouchableOpacity,
   Animated,
-  Easing,
   Keyboard,
   TouchableWithoutFeedback,
   ImageBackground,
@@ -17,7 +17,6 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/config';
 import { getUserData, saveUserData } from '../firebase/firestoreHelpers';
-import { PinchGestureHandler, State } from 'react-native-gesture-handler';
 import Slider from '@react-native-community/slider';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -242,6 +241,12 @@ export default function ScanScreen({ navigation }) {
     </TouchableWithoutFeedback>
   );
 }
+
+ScanScreen.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   View,
@@ -11,7 +12,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/config';
@@ -223,7 +223,7 @@ export default function ExploreScreen() {
           />
 
           {selectedProduct && productDetails && (
-            <Modal visible={true} animationType="slide" onRequestClose={() => {
+            <Modal visible animationType="slide" onRequestClose={() => {
               setSelectedProduct(null);
               setProductDetails(null);
             }}>
@@ -250,6 +250,8 @@ export default function ExploreScreen() {
     </ImageBackground>
   );
 }
+
+ExploreScreen.propTypes = {};
 
 const styles = StyleSheet.create({
   backButton: {

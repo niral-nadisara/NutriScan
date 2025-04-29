@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { View, Text, StyleSheet, Switch, ScrollView, Alert, Button } from 'react-native';
 import { auth } from '../firebase/config';
 import { saveUserData, getUserData } from '../firebase/firestoreHelpers';
@@ -108,4 +109,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 });
- 
+
+PreferencesScreen.propTypes = {
+  navigation: PropTypes.object.isRequired,
+};

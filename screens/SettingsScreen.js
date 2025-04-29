@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 const avatarOptions = [
   require('../assets/avatars/avatar1.png'),
   require('../assets/avatars/avatar2.png'),
@@ -151,6 +153,13 @@ export default function SettingsScreen({ navigation }) {
     </View>
   );
 }
+
+SettingsScreen.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    reset: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24 },

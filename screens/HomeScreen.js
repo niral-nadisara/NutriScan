@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   View,
   Text,
@@ -93,7 +94,7 @@ export default function HomeScreen({ navigation }) {
             ]}
           />
           <Animated.Text style={[styles.tagline, { opacity: opacityAnim }]}>
-          Good Choices Start with a Scan.
+            Good Choices Start with a Scan.
           </Animated.Text>
         </View>
 
@@ -106,26 +107,35 @@ export default function HomeScreen({ navigation }) {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.menu}>
-            <Pressable style={styles.menuItem} onPress={() => {
-              setMenuVisible(false);
-              navigation.navigate('Settings');
-            }}>
-              <Text style={styles.menuText}>Settings</Text>
-            </Pressable>
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  navigation.navigate('Settings');
+                }}
+              >
+                <Text style={styles.menuText}>Settings</Text>
+              </Pressable>
 
-            <Pressable style={styles.menuItem} onPress={() => {
-              setMenuVisible(false);
-              navigation.navigate('Preferences');
-            }}>
-              <Text style={styles.menuText}>Preferences</Text>
-            </Pressable>
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  navigation.navigate('Preferences');
+                }}
+              >
+                <Text style={styles.menuText}>Preferences</Text>
+              </Pressable>
 
-            <Pressable style={styles.menuItem} onPress={() => {
-              setMenuVisible(false);
-              navigation.navigate('ScanHistory');
-            }}>
-              <Text style={styles.menuText}>Scan History</Text>
-            </Pressable>
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  navigation.navigate('ScanHistory');
+                }}
+              >
+                <Text style={styles.menuText}>Scan History</Text>
+              </Pressable>
               <Pressable style={styles.closeBtn} onPress={() => setMenuVisible(false)}>
                 <Ionicons name="close-circle-outline" size={28} color="#555" />
               </Pressable>
@@ -137,13 +147,17 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
+HomeScreen.propTypes = {
+  navigation: PropTypes.object.isRequired,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 60,
     paddingHorizontal: 20,
     alignContent: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   burger: {
     // The burgerOverlay handles position now

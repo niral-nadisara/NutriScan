@@ -5,11 +5,11 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  Image,
   ActivityIndicator,
-  Alert,
   ImageBackground,
+  Image,
 } from 'react-native';
+import PropTypes from 'prop-types';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
@@ -189,3 +189,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
 });
+
+AuthScreen.propTypes = {
+  navigation: PropTypes.object,
+};
