@@ -9,7 +9,6 @@
 - 📷 **Barcode Scanning** using Expo Camera API
 - 🧠 **Clean Food Detection** using OpenFoodFacts categorization
 - 🌿 **Explore Mode** for discovering healthier alternatives
-- 🌤️ Weather-aware UI (uses device location)
 - 👤 Guest access — scan and browse without logging in
 - 🔐 **Login with Email/Password or Google**
 - ⚙️ **Preferences** saved to Firebase (e.g., Vegan-only, Hide Additives)
@@ -34,7 +33,7 @@
 
 | Home | Scan | Result |
 |------|------|--------|
-| ![home](screenshots/home.png) | ![scan](screenshots/scan.png) | ![result](screenshots/result.png) |
+| ![home](Screenshots/Home-Screen.png) | ![scan](Screenshots/Scan-Screen.png) | ![result](Screenshots/Results-Screen-1.PNG) |
 
 ---
 
