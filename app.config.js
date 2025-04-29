@@ -5,6 +5,7 @@ export default {
     name: 'NutriScan',
     slug: 'NutriScan',
     version: '1.0.0',
+    entryPoint: "./App.js",
     runtimeVersion: '1.0.0',
     updates: {
       url: 'https://u.expo.dev/8435a902-ae2f-4a41-b84c-bebec3bf406a',
