@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, Alert, ImageBackground, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, ImageBackground, TouchableOpacity } from 'react-native';
 import { ScanBarcode } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import alternativesData from '../assets/data/clean_alternatives.json';
 import { getUserData } from '../firebase/firestoreHelpers';
 import { analyzeIngredientsWithAI } from '../utils/analyzeIngredients';
+import PropTypes from 'prop-types';
 
 export default function ResultScreen({ route, navigation }) {
   const { barcode } = route.params;
@@ -57,7 +58,7 @@ export default function ResultScreen({ route, navigation }) {
 
       setAlternatives(matches.slice(0, 5));
     } catch (err) {
-      console.warn('⚠️ Failed to fetch alternatives:', err.message || err);
+      console.warn('⚠️ Failed to fetch alternatives:', err?.message || String(err));
       setAlternatives([]);
     }
   };
@@ -69,7 +70,8 @@ export default function ResultScreen({ route, navigation }) {
       const data = await res.json();
 
       if (!data || data.status === 0 || !data.product) {
-        Alert.alert("Not Found", "No product found for this barcode.");
+        // Alert.alert("Not Found", "No product found for this barcode.");
+        console.warn("No product found for this barcode.");
         return;
       }
 
@@ -83,7 +85,7 @@ export default function ResultScreen({ route, navigation }) {
           const analysis = await analyzeIngredientsWithAI(productData.ingredients_text);
           setAiResult(analysis);
         } catch (e) {
-          console.warn('⚠️ AI analysis failed:', e.message || e);
+          console.warn('⚠️ AI analysis failed:', e?.message || String(e));
         }
       }
 
@@ -96,10 +98,9 @@ export default function ResultScreen({ route, navigation }) {
         console.log('🔍 Fetched alternatives for categories:', productData.categories_tags);
         console.log('🔍 USDA fallback will search using:', joinedKeywords);
       }
-
     } catch (err) {
       console.error('❌ Fetch error:', err);
-      console.warn("⚠️ Failed to load product data.");
+      console.warn("⚠️ Failed to load product data.", err?.message || String(err));
     } finally {
       setLoading(false);
     }
@@ -521,4 +522,13 @@ const styles = StyleSheet.create({
   },
 });
 
-  
+ResultScreen.propTypes = {
+  route: PropTypes.shape({
+    params: PropTypes.shape({
+      barcode: PropTypes.string.isRequired,
+    }),
+  }).isRequired,
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+  }).isRequired,
+};

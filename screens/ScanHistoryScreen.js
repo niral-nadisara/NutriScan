@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity, ImageBackground } from 'react-native';
+import PropTypes from 'prop-types';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth } from '../firebase/config';
 import { getUserData } from '../firebase/firestoreHelpers';
@@ -60,6 +61,13 @@ export default function ScanHistoryScreen({ navigation }) {
     </ImageBackground>
   );
 }
+
+ScanHistoryScreen.propTypes = {
+  navigation: PropTypes.shape({
+    addListener: PropTypes.func.isRequired,
+    navigate: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
