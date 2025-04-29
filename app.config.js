@@ -5,6 +5,7 @@ export default {
     name: 'NutriScan',
     slug: 'NutriScan',
     version: '1.0.0',
+    entryPoint: "./App.js",
     extra: {
       firebaseApiKey: process.env.FIREBASE_API_KEY,
       firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN,
