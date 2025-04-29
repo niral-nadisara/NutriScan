@@ -79,7 +79,12 @@ export default function ScanScreen({ navigation }) {
         },
         ...currentHistory.slice(0, 49),
       ];
-
+      console.log('📦 Saving to history:', {
+        barcode,
+        name: name || 'Unknown Product',
+        score: typeof score === 'number' ? score : null,
+        timestamp: Date.now(),
+      });
       await saveUserData({ scanHistory: updatedHistory });
     } catch (err) {
       console.error('Failed to save scan history:', err);
@@ -127,8 +132,26 @@ export default function ScanScreen({ navigation }) {
       return;
     }
     setErrorMsg('');
-    await saveScanToHistory(manualCode);
-    navigation.navigate('Result', { barcode: manualCode });
+    try {
+      const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${manualCode}`);
+      const result = await res.json();
+
+      if (!result || result.status === 0 || !result.product) {
+        setErrorMsg("❌ No product found for this barcode.");
+        return;
+      }
+
+      const product = result.product;
+      console.log('✅ Product Name (manual):', product.product_name);
+
+      await saveScanToHistory(manualCode, product.product_name, product.nutriscore_score);
+      const isHealthy = product.nutriscore_score < 5;
+      triggerBorderBlink(isHealthy ? 'green' : 'red');
+      navigation.navigate('Result', { barcode: manualCode });
+    } catch (err) {
+      console.error('❌ Fetch error in manual submit:', err);
+      setErrorMsg("❌ Failed to fetch product information.");
+    }
   };
 
   if (!permission) return <Text>Requesting camera permissions...</Text>;
@@ -168,7 +191,7 @@ export default function ScanScreen({ navigation }) {
             zoom={zoom}
             onBarcodeScanned={handleBarcodeScanned}
             barcodeScannerSettings={{
-              barcodeTypes: ['ean13', 'upc_a', 'upc_e', 'code128'],
+              barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'itf14', 'gs1databar'],
             }}
           />
         </View>
@@ -236,6 +259,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: '#ccc',
     borderWidth: 1,
+    backgroundColor: 'rgba(31, 30, 30, 0.8)',
   },
   camera: {
     flex: 1,
