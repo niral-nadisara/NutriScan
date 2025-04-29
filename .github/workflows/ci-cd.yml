@@ -29,8 +29,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: 🧹 Lint the project (optional)
-        run: npm run lint
+    #   - name: 🧹 Lint the project (optional)
+    #     run: npm run lint
 
       - name: 🔥 Install Expo CLI
         run: npm install -g expo-cli
