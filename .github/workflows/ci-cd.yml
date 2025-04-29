@@ -6,34 +6,27 @@ on:
       - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⬇️ Checkout repository
+      - name: 📥 Checkout code
         uses: actions/checkout@v3
 
-      - name: ⚡ Setup Node.js
+      - name: 📦 Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: 📦 Install dependencies
+      - name: 🧪 Install dependencies
         run: npm install
 
-      - name: 💾 Cache node_modules
-        uses: actions/cache@v3
+      - name: ⚙️ Setup Expo
+        uses: expo/expo-github-action@v8
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 🔥 Install Expo & EAS CLI
-        run: npm install -g expo-cli eas-cli
-
-      - name: 🚀 Deploy using EAS Update
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          eas update --branch main --message "Automated update from GitHub Actions"
+      - name: 🚀 Run EAS Update
+        run: eas update --branch main --message "Auto-deployed via GitHub Actions 🚀"
