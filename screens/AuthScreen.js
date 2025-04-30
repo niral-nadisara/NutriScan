@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ImageBackground,
   Image,
+  TouchableOpacity
 } from 'react-native';
 import PropTypes from 'prop-types';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,20 +16,26 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { makeRedirectUri } from 'expo-auth-session';
 import { logIn, signUp, googleLoginWithIdToken } from '../hooks/useFirebaseAuth';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import HomeScreen from './HomeScreen';
 
 WebBrowser.maybeCompleteAuthSession();
+
 
 export default function AuthScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: 'YOUR_EXPO_CLIENT_ID.apps.googleusercontent.com',
-    iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
-    androidClientId: 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com',
-    webClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+    expoClientId: process.env.EXPO_GOOGLE_CLIENT_ID,
+    webClientId: process.env.WEB_GOOGLE_CLIENT_ID,
+    iosClientId: process.env.IOS_GOOGLE_CLIENT_ID,
+    androidClientId: process.env.ANDROID_CLIENT_ID,
     redirectUri: makeRedirectUri({ useProxy: true }),
     useProxy: true,
   });
@@ -65,6 +72,11 @@ export default function AuthScreen({ navigation }) {
 
   const handleSignUp = async () => {
     setLoading(true);
+    if (password !== confirmPassword) {
+      setErrorMsg('Passwords do not match.');
+      setLoading(false);
+      return;
+    }
     const { user, error } = await signUp(email, password);
     setLoading(false);
     if (error) setErrorMsg(error.message);
@@ -84,7 +96,9 @@ export default function AuthScreen({ navigation }) {
     >
       <LinearGradient colors={['#E0F7FAAA', '#B2EBF2AA']} style={styles.container}>
         <View style={styles.formOverlay}>
-          <Text style={styles.title}>Welcome to SafeBites</Text>
+          <Text style={styles.title}>
+            {isSignUpMode ? 'Create an Account' : 'Welcome to SafeBites'}
+          </Text>
 
           <TextInput
             placeholder="Email"
@@ -102,13 +116,32 @@ export default function AuthScreen({ navigation }) {
             style={styles.input}
             placeholderTextColor="#999"
           />
+          {isSignUpMode && (
+            <TextInput
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
+          )}
 
-          <Pressable style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Log In</Text>
+          <Pressable onPress={() => navigation.navigate('ForgotPassword')}>
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </Pressable>
 
-          <Pressable style={[styles.button, styles.secondaryButton]} onPress={handleSignUp}>
-            <Text style={[styles.buttonText, { color: '#444' }]}>Sign Up</Text>
+          <Pressable style={styles.button} onPress={isSignUpMode ? handleSignUp : handleLogin}>
+            <Text style={styles.buttonText}>{isSignUpMode ? 'Sign Up' : 'Log In'}</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.button, styles.secondaryButton]}
+            onPress={() => setIsSignUpMode(!isSignUpMode)}
+          >
+            <Text style={[styles.buttonText, { color: '#444' }]}>
+              {isSignUpMode ? 'Back to Log In' : 'Create Account'}
+            </Text>
           </Pressable>
 
           <Text style={styles.or}>──────── OR ────────</Text>
@@ -187,6 +220,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     borderRadius: 8,
     textAlign: 'left',
+  },
+  forgotPasswordText: {
+    color: '#1565c0',
+    textAlign: 'right',
+    marginBottom: 16,
+    textDecorationLine: 'underline',
+    fontWeight: '500',
   },
 });
 

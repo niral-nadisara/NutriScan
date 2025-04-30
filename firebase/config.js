@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { getAuth, initializeAuth, getReactNativePersistence, sendPasswordResetEmail } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
 import {
@@ -34,7 +34,8 @@ try {
   });
 }
 
+
 // Firestore
 const db = getFirestore(app);
 
-export { auth, db };
+export { auth, db, sendPasswordResetEmail };

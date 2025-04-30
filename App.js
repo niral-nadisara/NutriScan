@@ -13,6 +13,7 @@ import AuthScreen from './screens/AuthScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import PreferencesScreen from './screens/PreferencesScreen';
 import ScanHistoryScreen from './screens/ScanHistoryScreen';
+import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -48,7 +49,7 @@ function TabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Login"
+        name="Profile"
         component={AuthScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
@@ -71,6 +72,7 @@ export default function App() {
           <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="Preferences" component={PreferencesScreen} />
           <Stack.Screen name="ScanHistory" component={ScanHistoryScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </GestureHandlerRootView>
