@@ -98,8 +98,7 @@ Welcome to SafeBites! This guide helps you effectively use the app to scan, anal
 
 For assistance or feedback, please contact us:
 
-- **Email:** support@safebites.com  
-- **Phone:** +1-800-555-1234  
+- **Email:** support@safebites.com   
 - **Website:** [SafeBites Support](#)
 
 ---

@@ -63,6 +63,21 @@ ANDROID_CLIENT_ID=your_android_google_client_id
 ```
 npx expo start
 ```
+
+### 5. Run on Device with Expo Go
+
+You can test the app instantly using the **Expo Go** app:
+
+**a. Install Expo Go:**
+- [Android (Play Store)](https://play.google.com/store/apps/details?id=host.exp.exponent)
+- [iOS (App Store)](https://apps.apple.com/app/expo-go/id982107779)
+
+**b. Launch the App:**
+- After running `npx expo start`, scan the QR code from the terminal or web browser using the **Expo Go** app.
+- Make sure your development machine and phone are on the same Wi-Fi network.
+
+This allows you to preview the app live without building a native binary.
+
 📜 License
 
 MIT © Safebites
