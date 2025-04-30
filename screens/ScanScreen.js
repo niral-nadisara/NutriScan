@@ -32,6 +32,13 @@ export default function ScanScreen({ navigation }) {
   const [borderColor, setBorderColor] = useState('#ccc');
   const [errorMsg, setErrorMsg] = useState('');
 
+
+  useEffect(() => {
+    if (permission && !permission.granted) {
+      requestPermission();
+    }
+  }, [permission]);
+  
   useEffect(() => {
     let baseZoom = zoom;
   
