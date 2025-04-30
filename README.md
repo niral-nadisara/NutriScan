@@ -27,13 +27,6 @@
 - **AsyncStorage** (for guest mode)
 - **Cloud Sync** for preferences & history
 
----
-
-## 📱 Screenshots
-
-| Home | Scan | Result |
-|------|------|--------|
-| ![home](Screenshots/Home-Screen.png) | ![scan](Screenshots/Scan-Screen.png) | ![result](Screenshots/Results-Screen-1.PNG) |
 
 ---
 
